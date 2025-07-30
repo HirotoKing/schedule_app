@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>スケジュールアプリ</title>
+</head>
+<body>
+    <h1>スケジュール一覧</h1>
+
+    <form method="POST">
+        <label>日付: <input type="date" name="date" required></label><br>
+        <label>内容: <input type="text" name="content" required></label><br>
+        <input type="submit" value="追加">
+    </form>
+
+    <hr>
+    <ul>
+    {% for s in schedules %}
+        <li>{{ s[1] }} - {{ s[2] }} <a href="/delete/{{ s[0] }}">[削除]</a></li>
+    {% endfor %}
+    </ul>
+</body>
+</html>
