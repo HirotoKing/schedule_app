@@ -1,77 +1,86 @@
-from flask import Flask, request, redirect, render_template
-from werkzeug.security import check_password_hash, generate_password_hash
-from functools import wraps
+
+from flask import Flask, render_template, request, jsonify
 import sqlite3
-import datetime
-from flask import Response
-import os
+from datetime import datetime
 
 app = Flask(__name__)
+DB_PATH = "schedule.db"
 
-USERNAME = "admin"
-PASSWORD_HASH = generate_password_hash("yourpassword")
+def get_today():
+    now = datetime.now()
+    if now.hour < 6:
+        now = now.replace(day=now.day - 1)
+    return now.strftime("%Y-%m-%d")
 
-def init_db():
-    conn = sqlite3.connect('schedule.db')
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS schedule (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,
-            content TEXT NOT NULL
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
-init_db()
-
-def check_auth(username, password):
-    return username == USERNAME and check_password_hash(PASSWORD_HASH, password)
-
-def authenticate():
-    return Response(
-        '認証が必要です', 401,
-        {'WWW-Authenticate': 'Basic realm="Login Required"'}
-    )
-
-def requires_auth(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
-            return authenticate()
-        return f(*args, **kwargs)
-    return decorated
-
-@app.route("/", methods=["GET", "POST"])
-@requires_auth
+@app.route("/")
 def index():
-    conn = sqlite3.connect('schedule.db')
-    c = conn.cursor()
+    return render_template("index.html")
 
-    if request.method == "POST":
-        date = request.form.get("date")
-        content = request.form.get("content")
-        if date and content:
-            c.execute("INSERT INTO schedule (date, content) VALUES (?, ?)", (date, content))
-            conn.commit()
+@app.route("/log", methods=["POST"])
+def log_action():
+    data = request.json
+    action = data.get("action")
+    delta = int(data.get("delta"))
 
-    c.execute("SELECT * FROM schedule ORDER BY date")
-    schedules = c.fetchall()
+    if action is None or delta is None:
+        return jsonify({"status": "error", "message": "Invalid data"}), 400
+
+    today = get_today()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    # 初回なら行を作る
+    cur.execute("SELECT id FROM daily_summary WHERE date = ?", (today,))
+    if cur.fetchone() is None:
+        cur.execute("""
+            INSERT INTO daily_summary (date) VALUES (?)
+        """, (today,))
+
+    # 該当カラムをインクリメント、高度も加算
+    column_map = {
+        "寝食": "sleep_eat_count",
+        "仕事": "work_count",
+        "知的活動": "thinking_count",
+        "勉強": "study_count",
+        "運動": "exercise_count",
+        "ゲーム": "game_count"
+    }
+    col = column_map.get(action)
+    if col:
+        cur.execute(f"""UPDATE daily_summary
+            SET {col} = {col} + 1,
+                height_change = height_change + ?
+            WHERE date = ?
+        """, (delta, today))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "ok"})
+    else:
+        conn.close()
+        return jsonify({"status": "error", "message": "Unknown action"}), 400
+
+@app.route("/summary", methods=["GET"])
+def get_summary():
+    today = get_today()
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM daily_summary WHERE date = ?", (today,))
+    row = cur.fetchone()
     conn.close()
-    return render_template("index.html", schedules=schedules)
 
-@app.route("/delete/<int:item_id>")
-@requires_auth
-def delete(item_id):
-    conn = sqlite3.connect('schedule.db')
-    c = conn.cursor()
-    c.execute("DELETE FROM schedule WHERE id=?", (item_id,))
-    conn.commit()
-    conn.close()
-    return redirect("/")
+    if not row:
+        return jsonify({"summary": "記録がありません"})
+
+    summary = {
+        "寝食": row[2],
+        "仕事": row[3],
+        "知的活動": row[4],
+        "勉強": row[5],
+        "運動": row[6],
+        "ゲーム": row[7],
+        "高度変化": row[8]
+    }
+    return jsonify(summary)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
