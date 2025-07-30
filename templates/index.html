@@ -1,23 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>スケジュールアプリ</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>スケジュールアプリ</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>スケジュール一覧</h1>
+  <div class="top">
+    <div class="top-bar">
+      <button id="historyBtn">移動履歴</button>
+    </div>
+    <img src="{{ url_for('static', filename='balloon.png') }}" class="balloon" id="balloon" alt="気球" />
+    <div class="altimeter" id="altimeter">高度：0m</div>
+  </div>
 
-    <form method="POST">
-        <label>日付: <input type="date" name="date" required></label><br>
-        <label>内容: <input type="text" name="content" required></label><br>
-        <input type="submit" value="追加">
-    </form>
+  <div class="bottom">
+    <div id="questionBox" class="question">読み込み中...</div>
+    <div class="button-grid">
+      <button data-change="0">寝食</button>
+      <button data-change="0">仕事</button>
+      <button data-change="1">知的活動</button>
+      <button data-change="2">勉強</button>
+      <button data-change="2">運動</button>
+      <button data-change="-1">ゲーム</button>
+    </div>
+  </div>
 
-    <hr>
-    <ul>
-    {% for s in schedules %}
-        <li>{{ s[1] }} - {{ s[2] }} <a href="/delete/{{ s[0] }}">[削除]</a></li>
-    {% endfor %}
-    </ul>
+  <div id="historyPopup" class="popup hidden">
+    <div class="popup-content">
+      <span id="closePopup" class="close-btn">×</span>
+      <h3>本日の行動履歴</h3>
+      <ul id="historyList"></ul>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
