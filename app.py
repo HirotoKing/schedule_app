@@ -2,6 +2,7 @@
 from flask import Flask, render_template, request, jsonify
 import sqlite3
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 DB_PATH = "schedule.db"
