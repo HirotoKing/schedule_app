@@ -1,10 +1,9 @@
 from flask import Flask, render_template, request, jsonify
-import psycopg2
 from datetime import datetime
 import os
+import psycopg2
 
 app = Flask(__name__)
-
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_connection():
@@ -25,17 +24,17 @@ def log_action():
     data = request.json
     action = data.get("action")
     delta = int(data.get("delta"))
-
-    if action is None or delta is None:
-        return jsonify({"status": "error", "message": "Invalid data"}), 400
-
     today = get_today()
+
     conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("SELECT id FROM daily_summary WHERE date = %s", (today,))
     if cur.fetchone() is None:
-        cur.execute("INSERT INTO daily_summary (date) VALUES (%s)", (today,))
+        cur.execute("""
+            INSERT INTO daily_summary (date, height, bonus_given)
+            VALUES (%s, %s, %s)
+        """, (today, 100, False))
 
     column_map = {
         "寝食": "sleep_eat_count",
@@ -45,22 +44,22 @@ def log_action():
         "運動": "exercise_count",
         "ゲーム": "game_count"
     }
+
     col = column_map.get(action)
     if col:
         cur.execute(f"""
             UPDATE daily_summary
             SET {col} = {col} + 1,
-                height_change = height_change + %s
+                height = height + %s
             WHERE date = %s
         """, (delta, today))
+        cur.execute("INSERT INTO logs (date, slot, activity) VALUES (%s, %s, %s)",
+                    (today, data.get("slot"), action))
         conn.commit()
-        conn.close()
-        return jsonify({"status": "ok"})
-    else:
-        conn.close()
-        return jsonify({"status": "error", "message": "Unknown action"}), 400
+    conn.close()
+    return jsonify({"status": "ok"})
 
-@app.route("/summary", methods=["GET"])
+@app.route("/summary")
 def get_summary():
     today = get_today()
     conn = get_connection()
@@ -68,47 +67,14 @@ def get_summary():
     cur.execute("SELECT * FROM daily_summary WHERE date = %s", (today,))
     row = cur.fetchone()
     conn.close()
-
     if not row:
         return jsonify({"summary": "記録がありません"})
 
-    summary = {
-        "寝食": row[2],
-        "仕事": row[3],
-        "知的活動": row[4],
-        "勉強": row[5],
-        "運動": row[6],
-        "ゲーム": row[7],
-        "高度変化": row[8]
-    }
-    return jsonify(summary)
-
-@app.route("/answered_slots")
-def answered_slots():
-    date = request.args.get("date")
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT slot FROM logs WHERE date = %s", (date,))
-    slots = [row[0] for row in cur.fetchall()]
-    conn.close()
-    return jsonify(slots)
-
-@app.route("/submit", methods=["POST"])
-def submit_activity():
-    data = request.get_json()
-    date = get_today()
-    slot = data.get("slot")
-    activity = data.get("activity")
-
-    if not slot or not activity:
-        return jsonify({"status": "error", "message": "Invalid data"}), 400
-
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("INSERT INTO logs (date, slot, activity) VALUES (%s, %s, %s)", (date, slot, activity))
-    conn.commit()
-    conn.close()
-    return jsonify({"status": "ok"})
+    return jsonify({
+        "寝食": row[2], "仕事": row[3], "知的活動": row[4],
+        "勉強": row[5], "運動": row[6], "ゲーム": row[7],
+        "高度": row[8]
+    })
 
 @app.route("/summary_all")
 def summary_all():
@@ -116,26 +82,54 @@ def summary_all():
     cur = conn.cursor()
     cur.execute("""
         SELECT date, sleep_eat_count, work_count, thinking_count,
-               study_count, exercise_count, game_count, height_change
-        FROM daily_summary
-        ORDER BY date ASC
+               study_count, exercise_count, game_count, height
+        FROM daily_summary ORDER BY date
     """)
     rows = cur.fetchall()
     conn.close()
+    return jsonify([
+        {
+            "date": r[0], "寝食": r[1], "仕事": r[2],
+            "知的活動": r[3], "勉強": r[4], "運動": r[5],
+            "ゲーム": r[6], "高度": r[7]
+        } for r in rows
+    ])
 
-    result = []
-    for row in rows:
-        result.append({
-            "date": row[0],
-            "寝食": row[1],
-            "仕事": row[2],
-            "知的活動": row[3],
-            "勉強": row[4],
-            "運動": row[5],
-            "ゲーム": row[6],
-            "height_change": row[7]
-        })
-    return jsonify(result)
+@app.route("/answered_slots")
+def answered_slots():
+    date = request.args.get("date")
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT slot FROM logs WHERE date = %s", (date,))
+    rows = cur.fetchall()
+    conn.close()
+    return jsonify([r[0] for r in rows])
+
+@app.route("/bonus_status")
+def bonus_status():
+    today = get_today()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT bonus_given FROM daily_summary WHERE date = %s", (today,))
+    row = cur.fetchone()
+    conn.close()
+    return jsonify({"bonusGiven": row[0] if row else False})
+
+@app.route("/apply_bonus", methods=["POST"])
+def apply_bonus():
+    data = request.json
+    bonus = data.get("bonus", 0)
+    today = get_today()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE daily_summary
+        SET height = height + %s, bonus_given = true
+        WHERE date = %s
+    """, (bonus, today))
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "ok"})
 
 def init_db():
     conn = get_connection()
@@ -159,7 +153,8 @@ def init_db():
             study_count INTEGER DEFAULT 0,
             exercise_count INTEGER DEFAULT 0,
             game_count INTEGER DEFAULT 0,
-            height_change INTEGER DEFAULT 0
+            height INTEGER DEFAULT 100,
+            bonus_given BOOLEAN DEFAULT FALSE
         )
     ''')
     conn.commit()

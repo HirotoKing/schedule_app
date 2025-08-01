@@ -1,188 +1,158 @@
 body {
-    margin: 0;
-    font-family: sans-serif;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
-  .top {
-    flex: 1;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background: #cceeff;
-  }
-  .top-bar {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-  }
-  .top-bar button {
-    z-index: 10;
-    position: relative;
-  }
-  .balloon {
-      width: 200px;
-      animation: float 3s ease-in-out infinite;
-      transition: transform 0.3s ease-out;
-  }
-  .altimeter {
-    font-size: 1.5rem;
-    margin-top: 10px;
-  }
-  .bottom {
-    flex: 1;
-    background: #f0f0f0;
-    padding: 10px;
-    text-align: center;
-  }
-  .button-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-  }
-  button {
-    padding: 16px;
-    font-size: 1.1rem;
-    border: none;
-    border-radius: 8px;
-    background: #007bff;
-    color: white;
-  }
-  .question {
-    font-size: 1.2rem;
-    margin-bottom: 15px;
-  }
-  @keyframes float {
-    0% { transform: translateY(0); }
-    50% { transform: translateY(-30px); }
-    100% { transform: translateY(0); }
-  }
-  .float {
-    animation: float 2s ease-in-out infinite;
-  }
-  .popup {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .popup-content {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 400px;
-    text-align: left;
-  }
-  .hidden { display: none; }
-  .close-btn {
-    float: right;
-    font-size: 1.5rem;
-    cursor: pointer;
-  }
-  
-  /* 追加アニメーション */
-  .floating {
-    animation: float 3s ease-in-out infinite;
-  }
-  
-  .rising {
-    animation: rise 1.5s ease-out;
-  }
-  
-  @keyframes rise {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(-30px); }
-  }
+  margin: 0;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
 
-  .cloud-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    z-index: 0;
-  }
-  
-  .cloud {
-    position: absolute;
-    width: 300px;
-    opacity: 0.9;
-    transition: transform 0.5s linear;
-  }
-  
-  @keyframes fall {
-    0% {
-      transform: translateY(0px);
-    }
-    100% {
-      transform: translateY(100px);
-    }
-  }
-  .cloud.falling {
-    animation: fall 2s linear forwards;
-  }
+.top {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: #cceeff;
+}
 
-  button:disabled {
-    background-color: #cccccc;
-    color: #666666;
-    cursor: not-allowed;
-    opacity: 0.7;
-  }
+.top-bar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+}
 
-  #cloudContainer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    z-index: 1;  /* 背景になるよう調整 */
-  }
-  
-  
-  .cloud {
-    position: absolute;
-    width: 280px; /* お好みで調整 */
-    height: auto;
-    pointer-events: none;
-    z-index: 1;            /* ボタンより下にする */
-    opacity: 0.8;
-  }
-  
-  
-  .popup {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
-  }
-  
-  .popup-content {
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 400px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-  }
-  
-  .hidden {
-    display: none;
-  }
-  
-  
+.top-bar button {
+  position: relative;
+}
+
+.balloon {
+  width: 200px;
+  animation: float 3s ease-in-out infinite;
+  transition: transform 0.3s ease-out;
+}
+
+.altimeter {
+  font-size: 1.5rem;
+  margin-top: 10px;
+}
+
+.bottom {
+  flex: 1;
+  background: #f0f0f0;
+  padding: 10px;
+  text-align: center;
+}
+
+.button-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+button {
+  padding: 16px;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 8px;
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.question {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+}
+
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-30px); }
+  100% { transform: translateY(0); }
+}
+
+.floating {
+  animation: float 3s ease-in-out infinite;
+}
+
+.rising {
+  animation: rise 1.5s ease-out;
+}
+
+@keyframes rise {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-30px); }
+}
+
+/* 雲の見た目と位置調整 */
+#cloudContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.cloud {
+  position: absolute;
+  width: 280px;
+  height: auto;
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 1;
+  transition: transform 0.5s linear;
+}
+
+@keyframes fall {
+  0%   { transform: translateY(0px); }
+  100% { transform: translateY(100px); }
+}
+
+.cloud.falling {
+  animation: fall 2s linear forwards;
+}
+
+/* ポップアップスタイル */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.popup-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  text-align: left;
+}
+
+.hidden {
+  display: none;
+}
+
+.close-btn {
+  float: right;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
