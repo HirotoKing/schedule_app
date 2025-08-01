@@ -1,108 +1,378 @@
-
-const altimeter = document.getElementById("altimeter");
-const balloon = document.getElementById("balloon");
-const buttons = document.querySelectorAll(".button-grid button");
-const questionBox = document.getElementById("questionBox");
-const historyBtn = document.getElementById("historyBtn");
-const historyPopup = document.getElementById("historyPopup");
-const closePopup = document.getElementById("closePopup");
-const historyList = document.getElementById("historyList");
-
-let height = parseInt(localStorage.getItem("height") || "0");
-let log = JSON.parse(localStorage.getItem("log") || "{}");
-
-function updateDisplay() {
-  altimeter.textContent = `高度：${height}m`;
-  if (height > 0) {
-    balloon.classList.add("float");
-  } else {
-    balloon.classList.remove("float");
-  }
+// 活動ごとのポイント変換
+function getPoint(activity) {
+    switch(activity) {
+        case '寝食': return 0;
+        case '仕事': return 1;
+        case '知的活動': return 5;
+        case '勉強': return 10;
+        case '運動': return 10;
+        case 'ゲーム': return -5;
+        default: return 0;
+    }
 }
 
-function getTodayKey() {
-  const d = new Date();
-  if (d.getHours() < 6) d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0, 10);
+let cloudMoveInterval = null;
+let bonusGiven = false;
+
+// 高度をアニメーション付きで更新（高度中はボタン無効化）
+function updateAltitudeSmoothly(change, callback) {
+    let altimeterElem = document.getElementById("altimeter");
+    let current = parseInt(altimeterElem.dataset.altitude || "100");
+    const target = current + change;
+    const balloon = document.getElementById("balloon");
+    const warningElem = document.getElementById("warning");
+    warningElem.innerText = "";
+
+    disableButtons();
+
+    if (target < 100) {
+        current = 100;
+        altimeterElem.innerText = "高度：100m";
+        altimeterElem.dataset.altitude = "100";
+        stopCloudFall();
+        enableButtons();
+        warningElem.innerText = "これ以上高度は下がりません！";
+        if (callback) callback();
+        return;
+    }
+
+    if (change > 0) {
+        balloon.classList.remove("floating");
+        startCloudFall("down");
+    } else if (change < 0) {
+        balloon.classList.remove("floating");
+        startCloudFall("up");
+    }
+
+    const step = change > 0 ? 1 : -1;
+    const interval = setInterval(() => {
+        if (current === target) {
+            clearInterval(interval);
+            if (target > 100) balloon.classList.add("floating");
+            stopCloudFall();
+            enableButtons();
+            if (callback) callback();
+            return;
+        }
+        current += step;
+        altimeterElem.innerText = `高度：${current}m`;
+        altimeterElem.dataset.altitude = current;
+    }, 150);
 }
 
-function getSlots() {
-  const realNow = new Date(); // 実際の現在時刻（例：1:00）
-  const targetDate = new Date(realNow);
-  if (realNow.getHours() < 6) targetDate.setDate(targetDate.getDate() - 1); // 昨日扱いに修正
+function disableButtons() {
+    document.querySelectorAll(".button-grid button").forEach(btn => btn.disabled = true);
+}
+function enableButtons() {
+    document.querySelectorAll(".button-grid button").forEach(btn => btn.disabled = false);
+}
 
-  let start = new Date(targetDate); // ← ここを let に変更！
-  start.setHours(6, 0, 0, 0);
-
-  const slots = [];
-  while (start < realNow && start.getHours() < 25) {
-    let end = new Date(start);
-    end.setMinutes(end.getMinutes() + 30);
-    slots.push({
-      key: `${start.getHours()}:${String(start.getMinutes()).padStart(2, '0')}`,
-      range: `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}〜${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`,
-      time: start.toISOString()
+function handleButtonClick(activity) {
+    disableButtons();
+    const slot = unansweredSlots[currentSlotIndex];
+    const point = getPoint(activity);
+    sendActivityToServer(slot, activity);
+    updateAltitudeSmoothly(point, () => {
+        currentSlotIndex++;
+        askNextSlot();
     });
-    start = end; // ✅ let にしたからOK
-  }
-  return slots;
+}
+
+let unansweredSlots = [];
+let currentSlotIndex = 0;
+
+function startQuestioning(date) {
+    fetchAnsweredSlots(date).then(answered => {
+        unansweredSlots = getSlots(date).filter(slot => !answered.includes(slot));
+        if (unansweredSlots.length === 0) {
+            document.getElementById("question").innerText = "今日のすべての質問が完了しました。";
+        } else {
+            currentSlotIndex = 0;
+            if (answered.length === 0 && !bonusGiven) {
+                bonusGiven = true;
+                showBonusQuestions();
+            } else {
+                startMainQuestions();
+            }
+        }
+        document.getElementById("todayDate").innerText = "今日の日付：" + date;
+    });
+}
+
+function showBonusQuestions() {
+    const popup = document.getElementById("bonusPopup");
+    popup.classList.remove("hidden");
+
+    document.getElementById("bonusSubmit").onclick = () => {
+        const q1 = document.getElementById("q1").checked;
+        const q2 = document.getElementById("q2").checked;
+        let bonus = 0;
+        if (q1) bonus += 10;
+        if (q2) bonus += 10;
+
+        popup.classList.add("hidden");
+
+        if (bonus > 0) {
+            updateAltitudeSmoothly(bonus, () => {
+                startMainQuestions();
+            });
+        } else {
+            startMainQuestions();
+        }
+    };
 }
 
 
-let todayKey = getTodayKey();
-let slots = getSlots();
-let currentSlot = slots.find(s => !log[s.time]);
-
-function askNextQuestion() {
-  if (currentSlot) {
-    questionBox.textContent = `${currentSlot.range} の間、何をしていた？`;
-  } else {
-    questionBox.textContent = "今日のすべての質問が完了しました。";
-  }
+function startMainQuestions() {
+    askNextSlot();
 }
 
-buttons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    if (!currentSlot) return;
-    const delta = parseInt(btn.dataset.change);
-    const action = btn.textContent;
-    height = Math.max(0, height + delta);
-    log[currentSlot.time] = { label: action, delta: delta };
-    localStorage.setItem("height", height);
-    localStorage.setItem("log", JSON.stringify(log));
-    updateDisplay();
-    slots = getSlots();
-    currentSlot = slots.find(s => !log[s.time]);
-    askNextQuestion();
+function getSlots(dateStr) {
+    const slots = [];
+    const start = new Date(`${dateStr}T06:00:00`);
+    const end = new Date(start.getTime() + 19 * 60 * 60 * 1000);
+    for (let t = new Date(start); t < end; t.setMinutes(t.getMinutes() + 30)) {
+        const h = String(t.getHours()).padStart(2, "0");
+        const m = String(t.getMinutes()).padStart(2, "0");
+        slots.push(`${h}:${m}`);
+    }
+    return slots;
+}
 
-    // 🔁 DBへ送信（Flaskの /log を呼ぶ）
+function askNextSlot() {
+    if (currentSlotIndex >= unansweredSlots.length) {
+        document.getElementById("question").innerText = "今日のすべての質問が完了しました。";
+        return;
+    }
+    const slot = unansweredSlots[currentSlotIndex];
+    const nextTime = getNextHalfHour(slot);
+    document.getElementById("question").innerText = `${slot} から ${nextTime} の間、何をしていましたか？`;
+}
+
+function sendActivityToServer(slot, activity) {
     fetch("/log", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ action: action, delta: delta })
-    }).catch(err => console.error("DB送信エラー:", err));
-  });
-});
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: activity, delta: getPoint(activity) })
+    });
+}
 
-historyBtn.addEventListener("click", () => {
-  historyList.innerHTML = "";
-  fetch("/summary")
-    .then(res => res.json())
-    .then(data => {
-      for (const [label, count] of Object.entries(data)) {
-        const li = document.createElement("li");
-        li.textContent = `${label}：${count}`;
-        historyList.appendChild(li);
+function getNextHalfHour(slot) {
+    const [h, m] = slot.split(":").map(Number);
+    const t = new Date();
+    t.setHours(h, m + 30);
+    return `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}`;
+}
+
+async function fetchAnsweredSlots(date) {
+    const res = await fetch(`/answered_slots?date=${date}`);
+    const data = await res.json();
+    return data;
+}
+
+// --- 雲の処理 -----------------------------------
+
+function initClouds() {
+  const cloudContainer = document.getElementById("cloudContainer");
+  const initialCount = Math.floor(Math.random() * 2) + 2; // 2〜3個
+
+  for (let i = 0; i < initialCount; i++) {
+    createFloatingCloud();
+  }
+}
+
+function maintainClouds() {
+  const cloudContainer = document.getElementById("cloudContainer");
+
+  setInterval(() => {
+    const clouds = cloudContainer.querySelectorAll(".cloud");
+    const currentAlt = parseInt(document.getElementById("altimeter").dataset.altitude || "100");
+
+    // 雲が100m以上離れていたら削除
+    clouds.forEach(cloud => {
+      const baseAlt = parseInt(cloud.dataset.baseAltitude || "100");
+      if (Math.abs(currentAlt - baseAlt) > 100) {
+        cloud.remove();
       }
     });
-  historyPopup.classList.remove("hidden");
+
+    // ランダムに生成（確率10%）
+    if (Math.random() < 0.1 && clouds.length < 5) {
+      createFloatingCloud();
+    }
+  }, 1000); // 毎秒チェック
+}
+
+
+function createFloatingCloud() {
+  const cloudContainer = document.getElementById("cloudContainer");
+  const cloud = document.createElement("img");
+  cloud.src = "/static/cloud_transparent.png";
+  cloud.className = "cloud";
+
+  // 左（0〜30%）か右（70〜100%）にランダム出現
+  const left = Math.random() < 0.5 ? Math.random() * 30 : Math.random() * 30 + 70;
+  cloud.style.left = `${left}%`;
+
+  const top = Math.random() * 40 + 10;
+cloud.style.top = `${top}px`;
+cloud.dataset.baseTop = `${top}`;  // ← これを追加！
+
+
+  const currentAltitude = parseInt(document.getElementById("altimeter").dataset.altitude || "100");
+  cloud.dataset.baseAltitude = currentAltitude;
+
+  cloudContainer.appendChild(cloud);
+
+  // ゆらゆら用フラグ（高度変化中は OFF）
+  cloud.dataset.swaying = "true";
+  let frame = 0;
+
+  const interval = setInterval(() => {
+    if (!document.body.contains(cloud)) {
+      clearInterval(interval);
+      return;
+    }
+
+    if (cloud.dataset.swaying === "true") {
+      const sway = Math.sin(frame / 20) * 1.5;
+      cloud.style.top = `${parseFloat(cloud.dataset.baseTop) + sway}px`;
+      frame++;
+    }
+  }, 100);
+}
+
+function startCloudFall(direction = "down") {
+  // ゆらゆら一時停止
+  document.querySelectorAll(".cloud").forEach(cloud => {
+    cloud.dataset.swaying = "false";
+  });
+
+  if (cloudMoveInterval) clearInterval(cloudMoveInterval);
+  cloudMoveInterval = setInterval(() => {
+    document.querySelectorAll(".cloud").forEach(cloud => {
+      const currentTop = parseFloat(cloud.style.top);
+      const newTop = direction === "down" ? currentTop + 3 : currentTop - 3;
+      cloud.style.top = `${newTop}px`;
+    });
+  }, 50);
+}
+
+function stopCloudFall() {
+  if (cloudMoveInterval) {
+    clearInterval(cloudMoveInterval);
+    cloudMoveInterval = null;
+  }
+  // ゆらゆら再開
+  document.querySelectorAll(".cloud").forEach(cloud => {
+    cloud.dataset.baseTop = cloud.style.top;
+    cloud.dataset.swaying = "true";
+  });
+}
+
+
+function stopCloudFall() {
+    if (cloudMoveInterval) {
+        clearInterval(cloudMoveInterval);
+        cloudMoveInterval = null;
+    }
+}
+
+document.getElementById("historyBtn").addEventListener("click", () => {
+  fetch("/summary_all")
+    .then(res => res.json())
+    .then(data => {
+      showHistoryPopup(data);
+    });
 });
 
-closePopup.addEventListener("click", () => {
-  historyPopup.classList.add("hidden");
+document.getElementById("closePopup").addEventListener("click", () => {
+  document.getElementById("historyPopup").classList.add("hidden");
 });
 
-updateDisplay();
-askNextQuestion();
+function showHistoryPopup(data) {
+  const labels = data.map(d => d.date);
+
+  // 累積高度を計算（折れ線グラフ用）
+  const heights = [];
+  let cumulative = 100; // 初期高度は 100m
+  for (const d of data) {
+    cumulative += d.height_change;
+    heights.push(cumulative);
+  }
+
+  const ctx = document.getElementById("heightChart").getContext("2d");
+
+  if (window.heightChart && typeof window.heightChart.destroy === "function") {
+    window.heightChart.destroy();
+  }
+
+  window.heightChart = new Chart(ctx, {
+    type: "line",  // ← 折れ線グラフに変更
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "累積高度(m)",  // 表示名を変更
+        data: heights,
+        fill: false,
+        borderColor: "skyblue",
+        tension: 0.2  // 緩やかな曲線にする
+      }]
+    },
+    options: {
+      responsive: false,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+
+  // 以下：総合回数の表示はそのまま
+  const summaryList = document.getElementById("summaryList");
+  summaryList.innerHTML = "";
+
+  const totalCounts = {
+    "寝食": 0,
+    "仕事": 0,
+    "知的活動": 0,
+    "勉強": 0,
+    "運動": 0,
+    "ゲーム": 0
+  };
+
+  for (const d of data) {
+    for (const key in totalCounts) {
+      totalCounts[key] += d[key];
+    }
+  }
+
+  for (const key in totalCounts) {
+    const li = document.createElement("li");
+    li.textContent = `${key}：${totalCounts[key]} 回`;
+    summaryList.appendChild(li);
+  }
+
+  document.getElementById("historyPopup").classList.remove("hidden");
+}
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  initClouds();
+  maintainClouds();
+
+  const today = new Date().toISOString().split('T')[0];
+  startQuestioning(today);
+
+  // イベント登録（万が一漏れていた場合に備えて）
+  document.getElementById("historyBtn").addEventListener("click", () => {
+    fetch("/summary_all")
+      .then(res => res.json())
+      .then(data => {
+        showHistoryPopup(data);
+      });
+  });
+
+  document.getElementById("closePopup").addEventListener("click", () => {
+    document.getElementById("historyPopup").classList.add("hidden");
+  });
+});

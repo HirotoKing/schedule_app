@@ -8,33 +8,77 @@
 </head>
 <body>
   <div class="top">
+    <div id="cloudContainer"></div>
     <div class="top-bar">
       <button id="historyBtn">移動履歴</button>
     </div>
     <img src="{{ url_for('static', filename='balloon.png') }}" class="balloon" id="balloon" alt="気球" />
-    <div class="altimeter" id="altimeter">高度：0m</div>
+    <div class="altimeter" id="altimeter" data-altitude="100">高度：100m</div>
+    <div id="warning" class="warning"></div>
   </div>
 
   <div class="bottom">
-    <div id="questionBox" class="question">読み込み中...</div>
+    <div id="bonusQuestions"></div> <!-- ←ここにボーナス質問表示-->
+    <div id="question" class="question">読み込み中...</div>
     <div class="button-grid">
-      <button data-change="0">寝食</button>
-      <button data-change="0">仕事</button>
-      <button data-change="1">知的活動</button>
-      <button data-change="2">勉強</button>
-      <button data-change="2">運動</button>
-      <button data-change="-1">ゲーム</button>
+      <button onclick="handleButtonClick('寝食')">寝食</button>
+      <button onclick="handleButtonClick('仕事')">仕事</button>
+      <button onclick="handleButtonClick('知的活動')">知的活動</button>
+      <button onclick="handleButtonClick('勉強')">勉強</button>
+      <button onclick="handleButtonClick('運動')">運動</button>
+      <button onclick="handleButtonClick('ゲーム')">ゲーム</button>
     </div>
+    <div id="todayDate" class="today-date"></div>
   </div>
 
   <div id="historyPopup" class="popup hidden">
     <div class="popup-content">
       <span id="closePopup" class="close-btn">×</span>
       <h3>本日の行動履歴</h3>
-      <ul id="historyList"></ul>
+      <canvas id="heightChart" width="300" height="200"></canvas>  <!-- ← これ必要！ -->
+      <ul id="summaryList"></ul>
     </div>
   </div>
 
   <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toISOString().split('T')[0];
+      startQuestioning(today);
+      initClouds();
+      maintainClouds();  // ←ここで呼び出し
+    });
+  </script>
+  
+
+<div id="bonusPopup" class="popup hidden">
+  <div class="popup-content">
+    <h3>ボーナス質問</h3>
+    <p>以下の質問に答えてください（正直に！）</p>
+    <div>
+      <label><input type="checkbox" id="q1"> 昨日のスマホ操作時間は6時間以下だった</label>
+    </div>
+    <div>
+      <label><input type="checkbox" id="q2"> 昨日は24:00より前に寝て、今日は7:00に起きた</label>
+    </div>
+    <button id="bonusSubmit">回答してスタート</button>
+  </div>
+</div>
+<!-- Chart.js を読み込み -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- 高度履歴ポップアップ -->
+<div id="historyPopup" class="popup hidden">
+  <div class="popup-content">
+    <span id="closePopup" class="close-btn">×</span>
+    <h3>日別の高度推移</h3>
+    <canvas id="heightChart" width="300" height="150"></canvas>
+
+    <h3>行動の総合回数</h3>
+    <ul id="summaryList"></ul>
+  </div>
+</div>
+
+
 </body>
 </html>
