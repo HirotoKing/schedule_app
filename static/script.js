@@ -260,17 +260,17 @@ document.getElementById("closePopup").addEventListener("click", () => {
 
 function showHistoryPopup(data) {
     const labels = data.map(d => d.date);
-    const totals = data.map(d => d.height_change);
-    const ctx = document.getElementById("heightChart").getContext("2d");
+    const heights = data.map(d => d.height);  // 折れ線グラフ用の累積高度
 
+    const ctx = document.getElementById("heightChart").getContext("2d");
     if (window.heightChart) window.heightChart.destroy();
     window.heightChart = new Chart(ctx, {
         type: "line",
         data: {
             labels: labels,
             datasets: [{
-                label: "総高度(m)",
-                data: totals,
+                label: "累積高度(m)",
+                data: heights,
                 borderColor: "skyblue",
                 borderWidth: 2,
                 fill: false
@@ -286,17 +286,35 @@ function showHistoryPopup(data) {
 
     const summaryList = document.getElementById("summaryList");
     summaryList.innerHTML = "";
-    const counts = { "寝食": 0, "仕事": 0, "知的活動": 0, "勉強": 0, "運動": 0, "ゲーム": 0 };
+    const totalCounts = { "寝食": 0, "仕事": 0, "知的活動": 0, "勉強": 0, "運動": 0, "ゲーム": 0 };
 
     for (const row of data) {
-        for (const k in counts) counts[k] += row[k];
+        for (const key in totalCounts) {
+            totalCounts[key] += row[key];
+        }
     }
 
-    for (const k in counts) {
+    for (const key in totalCounts) {
         const li = document.createElement("li");
-        li.textContent = `${k}：${counts[k]} 回`;
+        li.textContent = `${key}：${totalCounts[key]} 回`;
         summaryList.appendChild(li);
     }
 
     document.getElementById("historyPopup").classList.remove("hidden");
 }
+
+
+async function fetchCurrentAltitude() {
+    const res = await fetch("/current_altitude");
+    const data = await res.json();
+    return data.altitude;
+}
+
+window.onload = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const altitude = await fetchCurrentAltitude();
+    const altElem = document.getElementById("altimeter");
+    altElem.dataset.altitude = altitude;
+    altElem.innerText = `高度：${altitude}m`;
+    startQuestioning(today);
+};

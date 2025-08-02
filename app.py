@@ -85,17 +85,27 @@ def summary_all():
     cur.execute("""
         SELECT date, sleep_eat_count, work_count, thinking_count,
                study_count, exercise_count, game_count, cumulative_height
-        FROM daily_summary ORDER BY date
+        FROM daily_summary
+        ORDER BY date ASC
     """)
     rows = cur.fetchall()
     conn.close()
-    return jsonify([
-        {
-            "date": r[0], "寝食": r[1], "仕事": r[2],
-            "知的活動": r[3], "勉強": r[4], "運動": r[5],
-            "ゲーム": r[6], "高度": r[7]
-        } for r in rows
-    ])
+
+    result = []
+    for row in rows:
+        result.append({
+            "date": row[0],
+            "寝食": row[1],
+            "仕事": row[2],
+            "知的活動": row[3],
+            "勉強": row[4],
+            "運動": row[5],
+            "ゲーム": row[6],
+            "height": row[7]  # ← ここが折れ線グラフに使われる値
+        })
+    return jsonify(result)
+
+
 
 @app.route("/answered_slots")
 def answered_slots():
