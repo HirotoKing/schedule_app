@@ -121,12 +121,20 @@ function startMainQuestions() {
 function getSlots(dateStr) {
     const slots = [];
     const start = new Date(`${dateStr}T06:00:00`);
-    const end = new Date(start.getTime() + 19 * 60 * 60 * 1000);
+    const end = new Date(start.getTime() + 19 * 60 * 60 * 1000); // 24:30
+
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
     for (let t = new Date(start); t < end; t.setMinutes(t.getMinutes() + 30)) {
-        const h = String(t.getHours()).padStart(2, "0");
-        const m = String(t.getMinutes()).padStart(2, "0");
-        slots.push(`${h}:${m}`);
+        const tMinutes = t.getHours() * 60 + t.getMinutes();
+        if (tMinutes <= nowMinutes || dateStr !== now.toISOString().split("T")[0]) {
+            const h = String(t.getHours()).padStart(2, "0");
+            const m = String(t.getMinutes()).padStart(2, "0");
+            slots.push(`${h}:${m}`);
+        }
     }
+
     return slots;
 }
 
