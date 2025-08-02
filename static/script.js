@@ -249,7 +249,7 @@ function showHistoryPopup(data) {
     }
 
     const ctx = document.getElementById("heightChart").getContext("2d");
-    if (window.heightChart) {
+    if (window.heightChart && typeof window.heightChart.destroy === "function") {
         window.heightChart.destroy();
     }
     window.heightChart = new Chart(ctx, {
