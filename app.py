@@ -102,26 +102,36 @@ def submit_activity():
 
 @app.route("/summary", methods=["GET"])
 def get_summary():
-    today = get_today()
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM daily_summary WHERE date = %s", (today,))
-    row = cur.fetchone()
+    cur.execute("""
+        SELECT date, sleep_eat_count, work_count, thinking_count,
+               study_count, exercise_count, game_count, height_change
+        FROM daily_summary
+        ORDER BY date DESC
+        LIMIT 3
+    """)
+    rows = cur.fetchall()
     conn.close()
 
-    if not row:
+    if not rows:
         return jsonify({"summary": "記録がありません"})
 
-    summary = {
-        "寝食": row[2],
-        "仕事": row[3],
-        "知的活動": row[4],
-        "勉強": row[5],
-        "運動": row[6],
-        "ゲーム": row[7],
-        "高度変化": row[8]
-    }
+    summary = []
+    for row in reversed(rows):  # 古い順に並べたい場合は reversed
+        summary.append({
+            "日付": row[0],
+            "寝食": row[1],
+            "仕事": row[2],
+            "知的活動": row[3],
+            "勉強": row[4],
+            "運動": row[5],
+            "ゲーム": row[6],
+            "高度変化": row[7]
+        })
+
     return jsonify(summary)
+
 
 @app.route("/answered_slots")
 def answered_slots():
