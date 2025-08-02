@@ -353,9 +353,19 @@ function checkDB() {
     }
   }
 
+  function getLogicalToday() {
+    const now = new Date();
+    if (now.getHours() < 6) {
+        now.setDate(now.getDate() - 1);
+    }
+    return now.toISOString().slice(0, 10);  // YYYY-MM-DD
+}
+
+
   window.addEventListener("DOMContentLoaded", () => {
     loadInitialAltitude();  // ← 高度の初期値を読み込む
-    const today = new Date().toISOString().split("T")[0];
+    // const today = new Date().toISOString().split("T")[0];
+    const today = getLogicalToday();  // ← 修正ポイント！
     startQuestioning(today);  // ← 既存の質問ロジック
     initClouds();             // ← 雲の初期化（必要なら）
     maintainClouds();         // ← 雲の常時管理（必要なら）
