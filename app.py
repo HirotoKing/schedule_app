@@ -48,6 +48,17 @@ def log_action():
     if cur.fetchone() is None:
         cur.execute("INSERT INTO daily_summary (date) VALUES (%s)", (today,))
 
+    # logsテーブルに記録（ここにtry-exceptを追加）
+    try:
+        cur.execute("INSERT INTO logs (date, slot, activity) VALUES (%s, %s, %s)", (today, slot, action))
+    except Exception as e:
+        print("ログの記録に失敗:", e)  # ← ここがポイント
+        conn.rollback()
+        conn.close()
+        return jsonify({"status": "error", "message": "Log insert failed"}), 500
+
+
+
     column_map = {
         "寝食": "sleep_eat_count",
         "仕事": "work_count",
