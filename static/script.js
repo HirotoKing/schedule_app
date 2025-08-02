@@ -291,3 +291,16 @@ function showHistoryPopup(data) {
 
     document.getElementById("historyPopup").classList.remove("hidden");
 }
+
+function checkDB() {
+    fetch("/summary_all")
+      .then(res => res.json())
+      .then(data => {
+        const container = document.getElementById("dbStatus");
+        container.innerText = JSON.stringify(data, null, 2);
+      })
+      .catch(err => {
+        document.getElementById("dbStatus").innerText = "エラー: " + err;
+      });
+  }
+  
