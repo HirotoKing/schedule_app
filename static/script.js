@@ -310,7 +310,7 @@ function checkDB() {
       const res = await fetch("/summary_all");
       const data = await res.json();
   
-      if (data && typeof data["高度変化"] === "number") {
+      if (Array.isArray(data)) {
         let cumulative = 100;
         for (const d of data) {
             cumulative += d.height_change;
