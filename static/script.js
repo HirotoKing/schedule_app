@@ -75,6 +75,23 @@ function handleButtonClick(activity) {
 let unansweredSlots = [];
 let currentSlotIndex = 0;
 
+function startQuestioning(date) {
+    fetchAnsweredSlots(date).then(answered => {
+        unansweredSlots = getSlots(date).filter(slot => !answered.includes(slot));
+        if (unansweredSlots.length === 0) {
+            document.getElementById("question").innerText = "今日のすべての質問が完了しました。";
+        } else {
+            currentSlotIndex = 0;
+            if (answered.length === 0 && !bonusGiven) {
+                bonusGiven = true;
+                showBonusQuestions();
+            } else {
+                startMainQuestions();
+            }
+        }
+        document.getElementById("todayDate").innerText = "今日の日付：" + date;
+    });
+}
 fetchAnsweredSlots(date).then(answered => {
     // ここで answered（回答済みスロット）を取得
     unansweredSlots = getSlots(date).filter(slot => !answered.includes(slot));
