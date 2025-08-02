@@ -62,12 +62,12 @@
 
   <script src="{{ url_for('static', filename='script.js') }}"></script>
   <script>
+    const today = new Date().toISOString().split('T')[0];
     window.addEventListener('DOMContentLoaded', () => {
-        const today = new Date().toISOString().split('T')[0];
-        startQuestioning(today);
-        initClouds();
-        maintainClouds();
-    });
-</script>
+    const today = new Date().toISOString().split('T')[0];
+    startQuestioning(today);
+    initClouds();
+    maintainClouds();
+  </script>
 </body>
 </html>
