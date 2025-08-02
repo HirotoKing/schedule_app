@@ -53,6 +53,13 @@
     </div>
   </div>
 
+  <!-- デバッグ用: DB状態表示ボタン -->
+<div style="text-align:center; margin-top: 10px;">
+  <button onclick="checkDB()">DBの状態を確認</button>
+  <div id="dbStatus" style="white-space: pre-wrap; font-size: 0.9em; color: #333; margin-top: 10px;"></div>
+</div>
+
+
   <script src="{{ url_for('static', filename='script.js') }}"></script>
   <script>
     const today = new Date().toISOString().split('T')[0];
