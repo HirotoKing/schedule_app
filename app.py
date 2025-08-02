@@ -35,6 +35,7 @@ def log_action():
     data = request.json
     action = data.get("action")
     delta = int(data.get("delta"))
+    slot = data.get("slot")  # ← これを追加
 
     if action is None or delta is None:
         return jsonify({"status": "error", "message": "Invalid data"}), 400
@@ -88,28 +89,25 @@ def submit_activity():
 
     return jsonify({"status": "ok"})
 
+
 @app.route("/summary", methods=["GET"])
 def get_summary():
     today = get_today()
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM daily_summary WHERE date = %s", (today,))
-    row = cur.fetchone()
+    cur.execute("SELECT slot, activity, timestamp FROM logs WHERE date = %s ORDER BY timestamp ASC", (today,))
+    rows = cur.fetchall()
     conn.close()
 
-    if not row:
-        return jsonify({"summary": "記録がありません"})
+    result = []
+    for row in rows:
+        result.append({
+            "slot": row[0],
+            "activity": row[1],
+            "timestamp": row[2].strftime("%Y-%m-%d %H:%M:%S")
+        })
 
-    summary = {
-        "寝食": row[2],
-        "仕事": row[3],
-        "知的活動": row[4],
-        "勉強": row[5],
-        "運動": row[6],
-        "ゲーム": row[7],
-        "高度変化": row[8]
-    }
-    return jsonify(summary)
+    return jsonify(result)
 
 @app.route("/answered_slots")
 def answered_slots():

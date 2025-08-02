@@ -144,7 +144,7 @@ function sendActivityToServer(slot, activity) {
     fetch("/log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: activity, delta: getPoint(activity) })
+        body: JSON.stringify({ slot: slot, action: activity, delta: getPoint(activity) })
     });
 }
 
