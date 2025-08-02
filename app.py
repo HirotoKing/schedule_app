@@ -22,6 +22,7 @@ def get_connection():
 
 def get_today():
     now = datetime.now()
+    # 日付変更判定かえるならここ
     if now.hour < 6:
         now = now.replace(day=now.day - 1)
     return now.strftime("%Y-%m-%d")

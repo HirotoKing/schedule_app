@@ -121,10 +121,16 @@ function startMainQuestions() {
 function getSlots(dateStr) {
     const slots = [];
     const start = new Date(`${dateStr}T06:00:00`);
-    const end = new Date(start.getTime() + 19 * 60 * 60 * 1000); // 24:30
+    const end = new Date(start.getTime() + 20 * 60 * 60 * 1000); // 26時まで
 
     const now = new Date();
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+     // 同じ日であれば、現在時刻まで
+    // ただし、早朝（〜5:59）は前日扱いなので除外
+    if (now < start) {
+        return slots; // まだ6:00前ならスロットなし
+    }
 
     for (let t = new Date(start); t < end; t.setMinutes(t.getMinutes() + 30)) {
         const tMinutes = t.getHours() * 60 + t.getMinutes();
