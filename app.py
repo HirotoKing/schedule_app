@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import psycopg2
 from datetime import datetime
 import os
+import urllib.parse as up
 
 app = Flask(__name__)
 
@@ -23,7 +24,21 @@ def get_today():
 
 
 def get_db_connection():
-    return psycopg2.connect(**DB_PARAMS)
+    # 環境変数 DATABASE_URL を使う（Render 推奨）
+    url = os.environ.get('DATABASE_URL')
+    if url is None:
+        raise Exception("環境変数 DATABASE_URL が設定されていません")
+    
+    # Render のURLはURL形式なので解析が必要
+    up.uses_netloc.append("postgres")
+    db_url = up.urlparse(url)
+    return psycopg2.connect(
+        dbname=db_url.path[1:],
+        user=db_url.username,
+        password=db_url.password,
+        host=db_url.hostname,
+        port=db_url.port
+    )
 
 
 @app.route("/")
