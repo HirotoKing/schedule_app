@@ -1,13 +1,19 @@
 from flask import Flask, render_template, request, jsonify
+import psycopg2
 from datetime import datetime
 import os
-import psycopg2
 
 app = Flask(__name__)
-DATABASE_URL = os.environ.get("DATABASE_URL")
 
-def get_connection():
-    return psycopg2.connect(DATABASE_URL)
+# PostgreSQL接続情報（環境変数から取得するのがベスト）
+DB_PARAMS = {
+    "dbname": "your_db",
+    "user": "your_user",
+    "password": "your_password",
+    "host": "localhost",
+    "port": "5432"
+}
+
 
 def get_today():
     now = datetime.now()
@@ -15,27 +21,43 @@ def get_today():
         now = now.replace(day=now.day - 1)
     return now.strftime("%Y-%m-%d")
 
+
+def get_db_connection():
+    return psycopg2.connect(**DB_PARAMS)
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
+
 
 @app.route("/log", methods=["POST"])
 def log_action():
     data = request.json
     action = data.get("action")
-    delta = int(data.get("delta"))
-    today = get_today()
+    delta = int(data.get("delta", 0))
 
-    conn = get_connection()
+    if action is None:
+        return jsonify({"status": "error", "message": "Invalid data"}), 400
+
+    today = get_today()
+    conn = get_db_connection()
     cur = conn.cursor()
 
+    # 初回なら行を作る
     cur.execute("SELECT id FROM daily_summary WHERE date = %s", (today,))
     if cur.fetchone() is None:
         cur.execute("""
-            INSERT INTO daily_summary (date, cumulative_height, height_change, bonus_given)
-            VALUES (%s, %s, %s, %s)
-        """, (today, 100, 0, False))
+            INSERT INTO daily_summary (date) VALUES (%s)
+        """, (today,))
 
+    # logs テーブルに記録
+    cur.execute("""
+        INSERT INTO logs (date, slot, activity)
+        VALUES (%s, %s, %s)
+    """, (today, "-", action))
+
+    # 該当カラムをインクリメント
     column_map = {
         "寝食": "sleep_eat_count",
         "仕事": "work_count",
@@ -50,43 +72,35 @@ def log_action():
         cur.execute(f"""
             UPDATE daily_summary
             SET {col} = {col} + 1,
-                height_change = height_change + %s,
-                cumulative_height = cumulative_height + %s
+                height_change = height_change + %s
             WHERE date = %s
-        """, (delta, delta, today))
+        """, (delta, today))
 
-        cur.execute("INSERT INTO logs (date, slot, activity) VALUES (%s, %s, %s)",
-                    (today, data.get("slot"), action))
-        conn.commit()
+    conn.commit()
     conn.close()
     return jsonify({"status": "ok"})
 
-@app.route("/summary")
-def get_summary():
-    today = get_today()
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM daily_summary WHERE date = %s", (today,))
-    row = cur.fetchone()
-    conn.close()
-    if not row:
-        return jsonify({"summary": "記録がありません"})
 
-    return jsonify({
-        "寝食": row[2], "仕事": row[3], "知的活動": row[4],
-        "勉強": row[5], "運動": row[6], "ゲーム": row[7],
-        "高度": row[8]
-    })
+@app.route("/answered_slots")
+def answered_slots():
+    date = request.args.get("date")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT slot FROM logs WHERE date = %s", (date,))
+    rows = cur.fetchall()
+    conn.close()
+    return jsonify([r[0] for r in rows])
+
 
 @app.route("/summary_all")
 def summary_all():
-    conn = get_connection()
+    conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("""
         SELECT date, sleep_eat_count, work_count, thinking_count,
-               study_count, exercise_count, game_count, cumulative_height
+               study_count, exercise_count, game_count, height_change
         FROM daily_summary
-        ORDER BY date ASC
+        ORDER BY date
     """)
     rows = cur.fetchall()
     conn.close()
@@ -101,62 +115,16 @@ def summary_all():
             "勉強": row[4],
             "運動": row[5],
             "ゲーム": row[6],
-            "height": row[7]
+            "height_change": row[7]
         })
     return jsonify(result)
 
-@app.route("/answered_slots")
-def answered_slots():
-    date = request.args.get("date")
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT slot FROM logs WHERE date = %s", (date,))
-    rows = cur.fetchall()
-    conn.close()
-    return jsonify([r[0] for r in rows])
-
-@app.route("/bonus_status")
-def bonus_status():
-    today = get_today()
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT bonus_given FROM daily_summary WHERE date = %s", (today,))
-    row = cur.fetchone()
-    conn.close()
-    return jsonify({"bonusGiven": row[0] if row else False})
-
-@app.route("/apply_bonus", methods=["POST"])
-def apply_bonus():
-    data = request.json
-    bonus = data.get("bonus", 0)
-    today = get_today()
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        UPDATE daily_summary
-        SET cumulative_height = cumulative_height + %s,
-            height_change = height_change + %s,
-            bonus_given = true
-        WHERE date = %s
-    """, (bonus, bonus, today))
-    conn.commit()
-    conn.close()
-    return jsonify({"status": "ok"})
-
-@app.route("/current_altitude")
-def current_altitude():
-    today = get_today()
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT cumulative_height FROM daily_summary WHERE date = %s", (today,))
-    row = cur.fetchone()
-    conn.close()
-    return jsonify({"altitude": row[0] if row else 100})
 
 def init_db():
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute('''
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS logs (
             id SERIAL PRIMARY KEY,
             date TEXT NOT NULL,
@@ -164,8 +132,9 @@ def init_db():
             activity TEXT NOT NULL,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    ''')
-    c.execute('''
+    """)
+
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS daily_summary (
             id SERIAL PRIMARY KEY,
             date TEXT UNIQUE,
@@ -175,16 +144,15 @@ def init_db():
             study_count INTEGER DEFAULT 0,
             exercise_count INTEGER DEFAULT 0,
             game_count INTEGER DEFAULT 0,
-            cumulative_height INTEGER DEFAULT 100,
-            height_change INTEGER DEFAULT 0,
-            bonus_given BOOLEAN DEFAULT FALSE
+            height_change INTEGER DEFAULT 0
         )
-    ''')
+    """)
+
     conn.commit()
     conn.close()
 
-init_db()
 
 if __name__ == "__main__":
+    init_db()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
