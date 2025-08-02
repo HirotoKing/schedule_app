@@ -84,7 +84,7 @@ def summary_all():
     cur = conn.cursor()
     cur.execute("""
         SELECT date, sleep_eat_count, work_count, thinking_count,
-               study_count, exercise_count, game_count, height
+               study_count, exercise_count, game_count, cumulative_height
         FROM daily_summary ORDER BY date
     """)
     rows = cur.fetchall()
