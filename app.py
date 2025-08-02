@@ -32,9 +32,9 @@ def log_action():
     cur.execute("SELECT id FROM daily_summary WHERE date = %s", (today,))
     if cur.fetchone() is None:
         cur.execute("""
-            INSERT INTO daily_summary (date, height, bonus_given)
-            VALUES (%s, %s, %s)
-        """, (today, 100, False))
+            INSERT INTO daily_summary (date, cumulative_height, height_change, bonus_given)
+            VALUES (%s, %s, %s, %s)
+        """, (today, 100, 0, False))
 
     column_map = {
         "寝食": "sleep_eat_count",
@@ -101,11 +101,9 @@ def summary_all():
             "勉強": row[4],
             "運動": row[5],
             "ゲーム": row[6],
-            "height": row[7]  # ← ここが折れ線グラフに使われる値
+            "height": row[7]
         })
     return jsonify(result)
-
-
 
 @app.route("/answered_slots")
 def answered_slots():
@@ -136,9 +134,11 @@ def apply_bonus():
     cur = conn.cursor()
     cur.execute("""
         UPDATE daily_summary
-        SET height = height + %s, bonus_given = true
+        SET cumulative_height = cumulative_height + %s,
+            height_change = height_change + %s,
+            bonus_given = true
         WHERE date = %s
-    """, (bonus, today))
+    """, (bonus, bonus, today))
     conn.commit()
     conn.close()
     return jsonify({"status": "ok"})
@@ -152,7 +152,6 @@ def current_altitude():
     row = cur.fetchone()
     conn.close()
     return jsonify({"altitude": row[0] if row else 100})
-
 
 def init_db():
     conn = get_connection()
@@ -176,7 +175,8 @@ def init_db():
             study_count INTEGER DEFAULT 0,
             exercise_count INTEGER DEFAULT 0,
             game_count INTEGER DEFAULT 0,
-            height INTEGER DEFAULT 100,
+            cumulative_height INTEGER DEFAULT 100,
+            height_change INTEGER DEFAULT 0,
             bonus_given BOOLEAN DEFAULT FALSE
         )
     ''')
