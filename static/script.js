@@ -242,7 +242,7 @@ document.getElementById("closePopup").addEventListener("click", () => {
 function showHistoryPopup(data) {
     const labels = data.map(d => d.date);
     const heights = [];
-    let cumulative = 0;
+    let cumulative = 100;
     for (const d of data) {
         cumulative += d.height_change;
         heights.push(cumulative);
@@ -307,14 +307,17 @@ function checkDB() {
 
   async function loadInitialAltitude() {
     try {
-      const res = await fetch("/summary");
+      const res = await fetch("/summary_all");
       const data = await res.json();
   
       if (data && typeof data["高度変化"] === "number") {
-        const alt = 100 + data["高度変化"];
+        let cumulative = 100;
+        for (const d of data) {
+            cumulative += d.height_change;
+        }
         const altimeterElem = document.getElementById("altimeter");
-        altimeterElem.innerText = `高度：${alt}m`;
-        altimeterElem.dataset.altitude = alt;
+        altimeterElem.innerText = `高度：${cumulative}m`;
+        altimeterElem.dataset.altitude = cumulative;
       }
     } catch (e) {
       console.error("初期高度の読み込みに失敗しました", e);
