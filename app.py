@@ -111,6 +111,28 @@ def get_summary():
     }
     return jsonify(summary)
 
+# @app.route("/summary", methods=["GET"])
+# def get_summary():
+#     today = get_today()
+#     conn = get_connection()
+#     cur = conn.cursor()
+#     cur.execute("SELECT slot, activity, timestamp FROM logs WHERE date = %s ORDER BY timestamp ASC", (today,))
+#     rows = cur.fetchall()
+#     conn.close()
+
+#     result = []
+#     for row in rows:
+#         result.append({
+#             "slot": row[0],
+#             "activity": row[1],
+#             "timestamp": row[2].strftime("%Y-%m-%d %H:%M:%S")
+#         })
+
+#     return jsonify(result)
+
+
+
+
 @app.route("/answered_slots")
 def answered_slots():
     date = request.args.get('date')
