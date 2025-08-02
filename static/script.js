@@ -320,3 +320,12 @@ function checkDB() {
       console.error("初期高度の読み込みに失敗しました", e);
     }
   }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    loadInitialAltitude();  // ← 高度の初期値を読み込む
+    const today = new Date().toISOString().split("T")[0];
+    startQuestioning(today);  // ← 既存の質問ロジック
+    initClouds();             // ← 雲の初期化（必要なら）
+    maintainClouds();         // ← 雲の常時管理（必要なら）
+  });
+  
