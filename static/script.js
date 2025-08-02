@@ -329,3 +329,5 @@ function checkDB() {
     maintainClouds();         // ← 雲の常時管理（必要なら）
   });
   
+
+  
