@@ -311,7 +311,31 @@ function checkDB() {
       .then(res => res.json())
       .then(data => {
         const container = document.getElementById("dbStatus");
-        container.innerText = JSON.stringify(data, null, 2);
+        container.innerHTML = "";
+  
+        data.slice(-3).forEach(day => {
+          const div = document.createElement("div");
+          div.classList.add("day-summary");
+  
+          const dateHeader = document.createElement("h4");
+          dateHeader.textContent = `■ ${day.date} の記録`;
+          div.appendChild(dateHeader);
+  
+          const heightP = document.createElement("p");
+          heightP.textContent = `・高度変化：${day.height_change}m`;
+          div.appendChild(heightP);
+  
+          const categories = ["寝食", "仕事", "知的活動", "勉強", "運動", "ゲーム"];
+          categories.forEach(cat => {
+            const count = day[cat] || 0;
+            const hours = count * 0.5;
+            const p = document.createElement("p");
+            p.textContent = `・${cat}：${hours}時間`;
+            div.appendChild(p);
+          });
+  
+          container.appendChild(div);
+        });
       })
       .catch(err => {
         document.getElementById("dbStatus").innerText = "エラー: " + err;
