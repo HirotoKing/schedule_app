@@ -304,3 +304,19 @@ function checkDB() {
       });
   }
   
+
+  async function loadInitialAltitude() {
+    try {
+      const res = await fetch("/summary");
+      const data = await res.json();
+  
+      if (data && typeof data["高度変化"] === "number") {
+        const alt = 100 + data["高度変化"];
+        const altimeterElem = document.getElementById("altimeter");
+        altimeterElem.innerText = `高度：${alt}m`;
+        altimeterElem.dataset.altitude = alt;
+      }
+    } catch (e) {
+      console.error("初期高度の読み込みに失敗しました", e);
+    }
+  }
