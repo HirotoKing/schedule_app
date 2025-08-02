@@ -50,9 +50,11 @@ def log_action():
         cur.execute(f"""
             UPDATE daily_summary
             SET {col} = {col} + 1,
-                height = height + %s
+                height_change = height_change + %s,
+                cumulative_height = cumulative_height + %s
             WHERE date = %s
-        """, (delta, today))
+        """, (delta, delta, today))
+
         cur.execute("INSERT INTO logs (date, slot, activity) VALUES (%s, %s, %s)",
                     (today, data.get("slot"), action))
         conn.commit()
@@ -130,6 +132,17 @@ def apply_bonus():
     conn.commit()
     conn.close()
     return jsonify({"status": "ok"})
+
+@app.route("/current_altitude")
+def current_altitude():
+    today = get_today()
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT cumulative_height FROM daily_summary WHERE date = %s", (today,))
+    row = cur.fetchone()
+    conn.close()
+    return jsonify({"altitude": row[0] if row else 100})
+
 
 def init_db():
     conn = get_connection()
