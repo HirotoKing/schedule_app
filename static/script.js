@@ -121,12 +121,11 @@ function startMainQuestions() {
 function getSlots(dateStr) {
     const slots = [];
     const start = new Date(`${dateStr}T06:00:00`);
-    const end = new Date(start.getTime() + 20 * 60 * 60 * 1000); // 26:00（翌2:00）
+    const end = new Date(start.getTime() + 20 * 60 * 60 * 1000); // 翌2:00まで
 
     const now = new Date();
-
     for (let t = new Date(start); t < end; t.setMinutes(t.getMinutes() + 30)) {
-        if (t > now) break; // ← 現在時刻を超えたら終了
+        if (t > now) break;
 
         const h = String(t.getHours()).padStart(2, "0");
         const m = String(t.getMinutes()).padStart(2, "0");
@@ -134,6 +133,7 @@ function getSlots(dateStr) {
     }
     return slots;
 }
+
 
 function askNextSlot() {
     if (currentSlotIndex >= unansweredSlots.length) {
