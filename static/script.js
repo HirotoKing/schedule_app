@@ -124,22 +124,17 @@ function startMainQuestions() {
 function getSlots(dateStr) {
     const slots = [];
     const start = new Date(`${dateStr}T06:00:00`);
-    const now = new Date();
-    const logicalNow = new Date();  // 論理日付ベース（6時前は前日扱い）
+    const end = new Date(start.getTime() + 20 * 60 * 60 * 1000); // 翌2:00まで（20時間）
 
-    if (now.getHours() < 6) {
-        logicalNow.setDate(logicalNow.getDate() - 1);
-    }
-
-    const end = new Date(now);  // 今の時間までを上限にする
-
-    for (let t = new Date(start); t <= end; t.setMinutes(t.getMinutes() + 30)) {
+    for (let t = new Date(start); t < end; t.setMinutes(t.getMinutes() + 30)) {
         const h = String(t.getHours()).padStart(2, "0");
         const m = String(t.getMinutes()).padStart(2, "0");
         slots.push(`${h}:${m}`);
     }
+
     return slots;
 }
+
 
 
 
@@ -368,6 +363,7 @@ function checkDB() {
     }
     return now.toISOString().split("T")[0];
 }
+
 
 
 
