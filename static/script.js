@@ -358,8 +358,9 @@ function checkDB() {
     if (now.getHours() < 6) {
         now.setDate(now.getDate() - 1);
     }
-    return now.toISOString().slice(0, 10);  // YYYY-MM-DD
+    return now.toISOString().split("T")[0];
 }
+
 
 
   window.addEventListener("DOMContentLoaded", () => {
