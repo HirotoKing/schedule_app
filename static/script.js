@@ -132,17 +132,17 @@ function startMainQuestions() {
 
 function getSlots(dateStr) {
     const slots = [];
-    const start = new Date(`${dateStr}T06:00:00`);
-    const end = new Date(start.getTime() + 20 * 60 * 60 * 1000); // 翌2:00まで（20時間）
+    const start = new Date(`${dateStr}T06:00:00+09:00`);  // JST対応
+    const end = new Date(start.getTime() + 21 * 60 * 60 * 1000);  // 03:00まで
 
     for (let t = new Date(start); t < end; t.setMinutes(t.getMinutes() + 30)) {
         const h = String(t.getHours()).padStart(2, "0");
         const m = String(t.getMinutes()).padStart(2, "0");
         slots.push(`${h}:${m}`);
     }
-
     return slots;
 }
+
 
 
 
