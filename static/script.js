@@ -76,6 +76,9 @@ let unansweredSlots = [];
 let currentSlotIndex = 0;
 
 function startQuestioning(date) {
+    console.log("今日の日付:", getLogicalToday());
+    console.log("今の時刻:", new Date().toTimeString());
+    console.log("スロット:", getSlots(getLogicalToday()));
     fetchAnsweredSlots(date).then(answered => {
         unansweredSlots = getSlots(date).filter(slot => !answered.includes(slot));
         if (unansweredSlots.length === 0) {
@@ -121,18 +124,23 @@ function startMainQuestions() {
 function getSlots(dateStr) {
     const slots = [];
     const start = new Date(`${dateStr}T06:00:00`);
-    const end = new Date(start.getTime() + 20 * 60 * 60 * 1000); // 翌2:00まで
-
     const now = new Date();
-    for (let t = new Date(start); t < end; t.setMinutes(t.getMinutes() + 30)) {
-        if (t > now) break;
+    const logicalNow = new Date();  // 論理日付ベース（6時前は前日扱い）
 
+    if (now.getHours() < 6) {
+        logicalNow.setDate(logicalNow.getDate() - 1);
+    }
+
+    const end = new Date(now);  // 今の時間までを上限にする
+
+    for (let t = new Date(start); t <= end; t.setMinutes(t.getMinutes() + 30)) {
         const h = String(t.getHours()).padStart(2, "0");
         const m = String(t.getMinutes()).padStart(2, "0");
         slots.push(`${h}:${m}`);
     }
     return slots;
 }
+
 
 
 function askNextSlot() {
