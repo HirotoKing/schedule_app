@@ -361,8 +361,13 @@ function checkDB() {
     if (now.getHours() < 6) {
         now.setDate(now.getDate() - 1);
     }
-    return now.toISOString().split("T")[0];
+    // 日本時間での日付文字列（例：2025-08-04）
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
 }
+
 
 
 
