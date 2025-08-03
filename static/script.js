@@ -80,7 +80,16 @@ function startQuestioning(date) {
     console.log("今の時刻:", new Date().toTimeString());
     console.log("スロット:", getSlots(getLogicalToday()));
     fetchAnsweredSlots(date).then(answered => {
-        unansweredSlots = getSlots(date).filter(slot => !answered.includes(slot));
+        const now = new Date();
+        unansweredSlots = getSlots(date).filter(slot => {
+            const [hour, minute] = slot.split(":").map(Number);
+            const slotTime = new Date(now);
+            slotTime.setHours(hour, minute, 0, 0);
+            return !answered.includes(slot) && slotTime <= now;
+        });
+        console.log("現在時刻:", now.toTimeString());
+        console.log("未回答スロット:", unansweredSlots);
+        
         if (unansweredSlots.length === 0) {
             document.getElementById("question").innerText = "今日のすべての質問が完了しました。";
         } else {
