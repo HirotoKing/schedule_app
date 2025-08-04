@@ -103,7 +103,7 @@ function startQuestioning(date) {
             document.getElementById("question").innerText = "今日のすべての質問が完了しました。";
         
             // すべての行動ボタンを無効化
-            const actionButtons = document.querySelectorAll(".action-button");
+            const actionButtons = document.querySelectorAll(".button-grid button");
             actionButtons.forEach(btn => {
                 btn.disabled = true;
                 btn.style.opacity = 0.5;
