@@ -76,34 +76,45 @@ let unansweredSlots = [];
 let currentSlotIndex = 0;
 
 function startQuestioning(date) {
-    console.log("今日の日付:", getLogicalToday());
-    console.log("今の時刻:", new Date().toTimeString());
-    console.log("スロット:", getSlots(getLogicalToday()));
-    fetchAnsweredSlots(date).then(answered => {
-        const now = new Date();
-        unansweredSlots = getSlots(date).filter(slot => {
-            const [hour, minute] = slot.split(":").map(Number);
-            const slotTime = new Date(now);
-            slotTime.setHours(hour, minute, 0, 0);
-            return !answered.includes(slot) && slotTime <= now;
-        });
-        console.log("現在時刻:", now.toTimeString());
-        console.log("未回答スロット:", unansweredSlots);
-        
-        if (unansweredSlots.length === 0) {
-            document.getElementById("question").innerText = "今日のすべての質問が完了しました。";
-        } else {
-            currentSlotIndex = 0;
-            if (answered.length === 0 && !bonusGiven) {
-                bonusGiven = true;
-                showBonusQuestions();
+    function startQuestioning(date) {
+        console.log("今日の日付:", getLogicalToday());
+        console.log("今の時刻:", new Date().toTimeString());
+        console.log("スロット:", getSlots(getLogicalToday()));
+    
+        fetchAnsweredSlots(date).then(answered => {
+            const now = new Date();
+            unansweredSlots = getSlots(date).filter(slot => {
+                const [hour, minute] = slot.split(":").map(Number);
+                const slotTime = new Date(now);
+    
+                slotTime.setHours(hour, minute, 0, 0);
+    
+                // 🔽 深夜（0〜5時台）だったら翌日に調整
+                if (hour < 6) {
+                    slotTime.setDate(slotTime.getDate() + 1);
+                }
+    
+                return !answered.includes(slot) && slotTime <= now;
+            });
+    
+            console.log("現在時刻:", now.toTimeString());
+            console.log("未回答スロット:", unansweredSlots);
+    
+            if (unansweredSlots.length === 0) {
+                document.getElementById("question").innerText = "今日のすべての質問が完了しました。";
             } else {
-                startMainQuestions();
+                currentSlotIndex = 0;
+                if (answered.length === 0 && !bonusGiven) {
+                    bonusGiven = true;
+                    showBonusQuestions();
+                } else {
+                    startMainQuestions();
+                }
             }
-        }
-        document.getElementById("todayDate").innerText = "今日の日付：" + date;
-    });
-}
+            document.getElementById("todayDate").innerText = "今日の日付：" + date;
+        });
+    }
+    
 
 function showBonusQuestions() {
     const popup = document.getElementById("bonusPopup");
@@ -132,16 +143,19 @@ function startMainQuestions() {
 
 function getSlots(dateStr) {
     const slots = [];
-    const start = new Date(`${dateStr}T06:00:00+09:00`);  // JST対応
-    const end = new Date(start.getTime() + 21 * 60 * 60 * 1000);  // 03:00まで
+    const start = new Date(`${dateStr}T06:00:00+09:00`);  // JST
+    const end = new Date(start.getTime() + 21 * 60 * 60 * 1000);  // 翌03:00まで
 
     for (let t = new Date(start); t < end; t.setMinutes(t.getMinutes() + 30)) {
-        const h = String(t.getHours()).padStart(2, "0");
-        const m = String(t.getMinutes()).padStart(2, "0");
-        slots.push(`${h}:${m}`);
+        const slotDate = new Date(t); // スロットごとの日時を個別に保存
+        const h = String(slotDate.getHours()).padStart(2, "0");
+        const m = String(slotDate.getMinutes()).padStart(2, "0");
+        const slotStr = `${h}:${m}`;
+        slots.push(slotStr);
     }
     return slots;
 }
+
 
 
 
