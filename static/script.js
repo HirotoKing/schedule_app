@@ -115,26 +115,50 @@ function startQuestioning(date) {
 }
 
 
-function showBonusQuestions() {
-    const popup = document.getElementById("bonusPopup");
-    popup.classList.remove("hidden");
-
-    document.getElementById("bonusSubmit").onclick = () => {
-        const q1 = document.getElementById("q1").checked;
-        const q2 = document.getElementById("q2").checked;
-        let bonus = 0;
-        if (q1) bonus += 10;
-        if (q2) bonus += 10;
-        popup.classList.add("hidden");
-        if (bonus > 0) {
-            updateAltitudeSmoothly(bonus, () => {
-                startMainQuestions();
-            });
-        } else {
-            startMainQuestions();
-        }
-    };
-}
+async function showBonusQuestions() {
+    const questionContainer = document.getElementById("question");
+    const yesNoButtons = document.getElementById("yes-no-buttons");
+    const actions = [
+      {
+        text: "昨日のスマホ操作時間は6時間以下だったか？",
+        action: "スマホ制限"
+      },
+      {
+        text: "昨日は24:00より前に寝て、今日は7:00に起きたか？",
+        action: "早寝早起き"
+      }
+    ];
+  
+    let index = 0;
+    questionContainer.innerText = actions[index].text;
+    yesNoButtons.style.display = "block";
+  
+    function handleAnswer(answer) {
+      if (answer === "はい") {
+        fetch("/log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: actions[index].action,
+            delta: 10,
+            slot: "-"
+          })
+        });
+      }
+  
+      index++;
+      if (index < actions.length) {
+        questionContainer.innerText = actions[index].text;
+      } else {
+        yesNoButtons.style.display = "none";
+        startMainQuestions(); // 通常の質問開始
+      }
+    }
+  
+    document.getElementById("yes-button").onclick = () => handleAnswer("はい");
+    document.getElementById("no-button").onclick = () => handleAnswer("いいえ");
+  }
+  
 
 function startMainQuestions() {
     askNextSlot();
@@ -269,7 +293,7 @@ document.getElementById("historyBtn").addEventListener("click", () => {
 document.getElementById("closePopup").addEventListener("click", () => {
     document.getElementById("historyPopup").classList.add("hidden");
 });
-function showHistoryPopup(data) {
+async function showHistoryPopup(data) {
     const labels = data.map(d => d.date);
     const heights = [];
     let cumulative = 100;
@@ -301,9 +325,9 @@ function showHistoryPopup(data) {
         }
     });
 
+    // 各行動の総合回数を表示
     const summaryList = document.getElementById("summaryList");
     summaryList.innerHTML = "";
-
     const totalCounts = {
         "寝食": 0, "仕事": 0, "知的活動": 0,
         "勉強": 0, "運動": 0, "ゲーム": 0
@@ -319,8 +343,21 @@ function showHistoryPopup(data) {
         summaryList.appendChild(li);
     }
 
+    // 🎯 ボーナス統計を表示
+    const bonusRes = await fetch("/bonus_stats");
+    const bonusStats = await bonusRes.json();
+
+    const bonusList = document.getElementById("bonusStatsList");
+    bonusList.innerHTML = "<h4>ボーナス質問の達成率</h4>";
+    for (const [action, stats] of Object.entries(bonusStats)) {
+        const li = document.createElement("li");
+        li.textContent = `${action}：${stats["達成率"]}（${stats["成功"]}/${stats["合計"]})`;
+        bonusList.appendChild(li);
+    }
+
     document.getElementById("historyPopup").classList.remove("hidden");
 }
+
 
 function checkDB() {
     fetch("/summary_all")

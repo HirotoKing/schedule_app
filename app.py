@@ -202,6 +202,40 @@ def init_db():
     conn.commit()
     conn.close()
 
+@app.route("/bonus_stats")
+def bonus_stats():
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # ボーナス対象アクション
+    bonus_actions = ["スマホ制限", "早寝早起き"]
+    result = {}
+
+    for action in bonus_actions:
+        # 回答総数
+        cur.execute("SELECT COUNT(*) FROM logs WHERE activity = %s", (action,))
+        total = cur.fetchone()[0]
+
+        # 成功数（delta=10 → 高度が加算された記録）
+        cur.execute("""
+            SELECT COUNT(*) FROM logs 
+            WHERE activity = %s AND slot = '-' AND date IS NOT NULL
+        """, (action,))
+        success = cur.fetchone()[0]
+
+        # 率（パーセンテージ）
+        rate = f"{round((success / total) * 100)}%" if total > 0 else "0%"
+
+        result[action] = {
+            "成功": success,
+            "合計": total,
+            "達成率": rate
+        }
+
+    conn.close()
+    return jsonify(result)
+
+
 # Render用
 if __name__ == "__main__":
     init_db()
