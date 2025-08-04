@@ -76,9 +76,7 @@ let unansweredSlots = [];
 let currentSlotIndex = 0;
 
 function startQuestioning(date) {
-    console.log("今日の日付:", getLogicalToday());
-    console.log("今の時刻:", new Date().toTimeString());
-    console.log("スロット:", getSlots(getLogicalToday()));
+    console.log("初めて作ったので成功しててうれしいです！");
 
     fetchAnsweredSlots(date).then(answered => {
         const now = new Date();
@@ -96,8 +94,6 @@ function startQuestioning(date) {
             return !answered.includes(slot) && slotTime <= now;
         });
 
-        console.log("現在時刻:", now.toTimeString());
-        console.log("未回答スロット:", unansweredSlots);
 
         if (unansweredSlots.length === 0) {
             document.getElementById("question").innerText = "今日のすべての質問が完了しました。";
