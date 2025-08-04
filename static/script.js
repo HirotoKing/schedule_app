@@ -101,6 +101,15 @@ function startQuestioning(date) {
 
         if (unansweredSlots.length === 0) {
             document.getElementById("question").innerText = "今日のすべての質問が完了しました。";
+        
+            // すべての行動ボタンを無効化
+            const actionButtons = document.querySelectorAll(".action-button");
+            actionButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = 0.5;
+                btn.style.cursor = "default";
+            });
+        
         } else {
             currentSlotIndex = 0;
             if (answered.length === 0 && !bonusGiven) {
