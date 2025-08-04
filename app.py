@@ -20,13 +20,15 @@ def get_connection():
         port=parsed.port
     )
 
-from pytz import timezone
+from datetime import datetime, timedelta
 
 def get_today():
-    now = datetime.now(timezone("Asia/Tokyo"))
+    # UTCに+9時間でJSTに変換
+    now = datetime.utcnow() + timedelta(hours=9)
     if now.hour < 6:
         now -= timedelta(days=1)
     return now.strftime("%Y-%m-%d")
+
 
 @app.route("/")
 def index():
