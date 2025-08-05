@@ -38,12 +38,8 @@ def index():
 def log_action():
     data = request.json
     action = data.get("action")
-    try:
-        delta = int(data.get("delta", 0))  # デフォルト値を0に
-    except ValueError:
-        return jsonify({"status": "error", "message": "Invalid delta"}), 400
-
-    slot = data.get("slot")  # ← これを追加
+    delta = int(data.get("delta"))
+    slot = data.get("slot")
 
     if action is None or delta is None:
         return jsonify({"status": "error", "message": "Invalid data"}), 400
@@ -56,17 +52,15 @@ def log_action():
     if cur.fetchone() is None:
         cur.execute("INSERT INTO daily_summary (date) VALUES (%s)", (today,))
 
-    # logsテーブルに記録（ここにtry-exceptを追加）
     try:
-        cur.execute("INSERT INTO logs (date, slot, activity, delta) VALUES (%s, %s, %s, %s)", (today, slot, action, delta))
+        cur.execute("INSERT INTO logs (date, slot, activity) VALUES (%s, %s, %s)", (today, slot, action))
     except Exception as e:
-        print("ログの記録に失敗:", e)  # ← ここがポイント
+        print("ログの記録に失敗:", e)
         conn.rollback()
         conn.close()
         return jsonify({"status": "error", "message": "Log insert failed"}), 500
 
-
-
+    # ⬇️ カラムがあれば daily_summary を更新、なければスキップ
     column_map = {
         "寝食": "sleep_eat_count",
         "仕事": "work_count",
@@ -83,12 +77,11 @@ def log_action():
                 height_change = height_change + %s
             WHERE date = %s
         """, (delta, today))
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "ok"})
-    else:
-        conn.close()
-        return jsonify({"status": "error", "message": "Unknown action"}), 400
+
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "ok"})
+
 
 @app.route("/submit", methods=["POST"])
 def submit_activity():
