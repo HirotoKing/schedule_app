@@ -119,6 +119,10 @@ function startQuestioning(date) {
     });
 }
 
+function startMainQuestions() {
+    askNextSlot();
+}
+
 
 async function showBonusQuestions() {
     const popup = document.getElementById("bonusPopup");
