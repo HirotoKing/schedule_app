@@ -121,8 +121,11 @@ function startQuestioning(date) {
 
 
 async function showBonusQuestions() {
-    const questionContainer = document.getElementById("question");
-    const yesNoButtons = document.getElementById("yes-no-buttons");
+    const popup = document.getElementById("bonusPopup");
+    const questionText = document.getElementById("bonusQuestionText");
+    const yesButton = document.getElementById("bonusYes");
+    const noButton = document.getElementById("bonusNo");
+  
     const actions = [
       {
         text: "昨日のスマホ操作時間は6時間以下だったか？",
@@ -135,33 +138,33 @@ async function showBonusQuestions() {
     ];
   
     let index = 0;
-    questionContainer.innerText = actions[index].text;
-    yesNoButtons.style.display = "block";
+    popup.classList.remove("hidden");
+    questionText.innerText = actions[index].text;
   
-    function handleAnswer(answer) {
-      if (answer === "はい") {
-        fetch("/log", {
+    async function handleAnswer(answer) {
+        const actionName = actions[index].action;
+    
+        await fetch("/log", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            action: actions[index].action,
-            delta: 10,
+            action: actionName,
+            delta: answer === "はい" ? 10 : 0,
             slot: "-"
           })
         });
-      }
   
       index++;
       if (index < actions.length) {
-        questionContainer.innerText = actions[index].text;
+        questionText.innerText = actions[index].text;
       } else {
-        yesNoButtons.style.display = "none";
+        popup.classList.add("hidden");
         startMainQuestions(); // 通常の質問開始
       }
     }
   
-    document.getElementById("yes-button").onclick = () => handleAnswer("はい");
-    document.getElementById("no-button").onclick = () => handleAnswer("いいえ");
+    yesButton.onclick = () => handleAnswer("はい");
+    noButton.onclick = () => handleAnswer("いいえ");
   }
   
 

@@ -219,7 +219,7 @@ def bonus_stats():
         # 成功数（delta=10 → 高度が加算された記録）
         cur.execute("""
             SELECT COUNT(*) FROM logs 
-            WHERE activity = %s AND slot = '-' AND date IS NOT NULL
+            WHERE activity = %s AND slot = '-' AND delta = 10
         """, (action,))
         success = cur.fetchone()[0]
 
