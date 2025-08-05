@@ -158,7 +158,7 @@ async function showBonusQuestions() {
       
         index++;
         if (index < actions.length) {
-          questionContainer.innerText = actions[index].text;
+            questionText.innerText = actions[index].text;  // 
         } else {
           yesNoButtons.style.display = "none";
           startMainQuestions(); // 通常の質問開始
