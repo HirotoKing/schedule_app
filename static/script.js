@@ -141,27 +141,37 @@ async function showBonusQuestions() {
     popup.classList.remove("hidden");
     questionText.innerText = actions[index].text;
   
-    function handleAnswer(answer) {
-      const deltaValue = (answer === "はい") ? 10 : 0;
-  
-      fetch("/log", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: actions[index].action,
-          slot: "-",
-          delta: deltaValue
-        })
-      });
-  
-      index++;
-      if (index < actions.length) {
-        questionText.innerText = actions[index].text;
-      } else {
-        popup.classList.add("hidden");  // ← ポップアップを閉じる
-        startMainQuestions();
-      }
-    }
+        async function handleAnswer(answer) {
+            const deltaValue = (answer === "はい") ? 10 : 0;
+        
+            try {
+            const res = await fetch("/log", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                action: actions[index].action,
+                slot: "-",
+                delta: deltaValue
+                })
+            });
+        
+            if (!res.ok) {
+                const text = await res.text();  // エラーメッセージ詳細も確認
+                console.error("ログ送信失敗:", res.status, text);
+            }
+            } catch (err) {
+            console.error("通信エラー:", err);
+            }
+        
+            index++;
+            if (index < actions.length) {
+            questionText.innerText = actions[index].text;
+            } else {
+            popup.classList.add("hidden");
+            startMainQuestions();
+            }
+        }
+      
   
     yesButton.onclick = () => handleAnswer("はい");
     noButton.onclick = () => handleAnswer("いいえ");
