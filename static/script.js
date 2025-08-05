@@ -141,27 +141,28 @@ async function showBonusQuestions() {
     popup.classList.remove("hidden");
     questionText.innerText = actions[index].text;
   
-    async function handleAnswer(answer) {
-        const actionName = actions[index].action;
-    
-        await fetch("/log", {
+    function handleAnswer(answer) {
+        // delta は「はい」なら10、「いいえ」なら0
+        const deltaValue = (answer === "はい") ? 10 : 0;
+      
+        fetch("/log", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            action: actionName,
-            delta: answer === "はい" ? 10 : 0,
+            action: actions[index].action,
+            delta: deltaValue,
             slot: "-"
           })
         });
-  
-      index++;
-      if (index < actions.length) {
-        questionText.innerText = actions[index].text;
-      } else {
-        popup.classList.add("hidden");
-        startMainQuestions(); // 通常の質問開始
+      
+        index++;
+        if (index < actions.length) {
+          questionContainer.innerText = actions[index].text;
+        } else {
+          yesNoButtons.style.display = "none";
+          startMainQuestions(); // 通常の質問開始
+        }
       }
-    }
   
     yesButton.onclick = () => handleAnswer("はい");
     noButton.onclick = () => handleAnswer("いいえ");
