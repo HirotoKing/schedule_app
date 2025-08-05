@@ -211,27 +211,20 @@ def bonus_stats():
     result = {}
 
     for action in bonus_actions:
-        # 回答総数
-        cur.execute("SELECT COUNT(*) FROM logs WHERE activity = %s", (action,))
-
-        # 成功数（delta=10 → 高度が加算された記録）
+        # 達成（delta=10）の回数（過去7日分）
         cur.execute("""
             SELECT COUNT(*) FROM logs 
-            WHERE activity = %s AND delta = 10 AND date >= (CURRENT_DATE - INTERVAL '6 days')
+            WHERE activity = %s AND slot = '-' AND delta = 10 AND date >= (CURRENT_DATE - INTERVAL '6 days')
         """, (action,))
-        success = cur.fetchone()[0]
-
-        # 率（パーセンテージ）
-        rate = f"{round((success / 7) * 100)}%" if 7 > 0 else "0%"
+        count = cur.fetchone()[0]
 
         result[action] = {
-            "成功": success,
-            "合計": 7,
-            "達成率": rate
+            "直近7日間の達成数": count
         }
 
     conn.close()
     return jsonify(result)
+
 
 
 # Render用

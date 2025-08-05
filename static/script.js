@@ -213,12 +213,18 @@ function askNextSlot() {
 }
 
 function sendActivityToServer(slot, activity) {
+    const point = getPoint(activity);  // ← ここでポイント計算
     fetch("/log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slot: slot, action: activity })
+        body: JSON.stringify({
+            slot: slot,
+            action: activity,
+            delta: point  // ← 追加
+        })
     });
 }
+
 
 function getNextHalfHour(slot) {
     const [h, m] = slot.split(":").map(Number);
