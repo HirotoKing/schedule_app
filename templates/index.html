@@ -20,14 +20,14 @@
 
   <div class="bottom">
     <!-- ボーナス質問ポップアップ -->
-<div id="bonusPopup" class="popup hidden">
-  <div class="popup-content">
-    <p id="bonusQuestionText">ここに質問が表示されます</p>
-    <div>
-      <button id="bonusYes">はい</button>
-      <button id="bonusNo">いいえ</button>
+    <div id="bonusPopup" class="popup hidden">
+      <div class="popup-content">
+        <p id="bonusQuestionText"></p>
+        <button id="bonusYes">はい</button>
+        <button id="bonusNo">いいえ</button>
+      </div>
     </div>
-  </div>
+    
 </div>
     <div id="question" class="question">読み込み中...</div>
     <div class="button-grid">
@@ -67,4 +67,66 @@
     maintainClouds();
   </script>
 </body>
+</html><!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>スケジュールアプリ</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="top">
+    <div id="cloudContainer"></div>
+    <div class="top-bar">
+      <button id="historyBtn">移動履歴</button>
+    </div>
+    <img src="{{ url_for('static', filename='balloon.png') }}" class="balloon" id="balloon" alt="気球" />
+    <div class="altimeter" id="altimeter" data-altitude="100">高度：100m</div>
+    <div id="warning" class="warning"></div>
+  </div>
+
+  <div class="bottom">
+    <!-- ボーナス質問ポップアップ -->
+    <div id="bonusPopup" class="popup hidden">
+      <div class="popup-content">
+        <p id="bonusQuestionText"></p>
+        <button id="bonusYes">はい</button>
+        <button id="bonusNo">いいえ</button>
+      </div>
+    </div>
+
+    <div id="question" class="question">読み込み中...</div>
+    <div class="button-grid">
+      <button onclick="handleButtonClick('寝食')">寝食</button>
+      <button onclick="handleButtonClick('仕事')">仕事</button>
+      <button onclick="handleButtonClick('知的活動')">知的活動</button>
+      <button onclick="handleButtonClick('勉強')">勉強</button>
+      <button onclick="handleButtonClick('運動')">運動</button>
+      <button onclick="handleButtonClick('ゲーム')">ゲーム</button>
+    </div>
+    <div id="todayDate" class="today-date"></div>
+  </div>
+
+  <div id="historyPopup" class="popup hidden">
+    <div class="popup-content">
+      <span id="closePopup" class="close-btn">×</span>
+      <h3>累積高度の推移</h3>
+      <canvas id="heightChart" width="300" height="200"></canvas>
+      <h4>各行動の総合回数</h4>
+      <ul id="summaryList"></ul>
+      <ul id="bonusStatsList"></ul>
+    </div>
+  </div>
+
+  <!-- デバッグ用: DB状態表示ボタン -->
+  <div style="text-align:center; margin-top: 10px;">
+    <button onclick="checkDB()">DBの状態を確認</button>
+    <div id="dbStatus" style="white-space: pre-wrap; font-size: 0.9em; color: #333; margin-top: 10px;"></div>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
 </html>
+

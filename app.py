@@ -38,7 +38,11 @@ def index():
 def log_action():
     data = request.json
     action = data.get("action")
-    delta = int(data.get("delta"))
+    try:
+        delta = int(data.get("delta", 0))  # デフォルト値を0に
+    except ValueError:
+        return jsonify({"status": "error", "message": "Invalid delta"}), 400
+
     slot = data.get("slot")  # ← これを追加
 
     if action is None or delta is None:
@@ -54,7 +58,7 @@ def log_action():
 
     # logsテーブルに記録（ここにtry-exceptを追加）
     try:
-        cur.execute("INSERT INTO logs (date, slot, activity) VALUES (%s, %s, %s)", (today, slot, action))
+        cur.execute("INSERT INTO logs (date, slot, activity, delta) VALUES (%s, %s, %s, %s)", (today, slot, action, delta))
     except Exception as e:
         print("ログの記録に失敗:", e)  # ← ここがポイント
         conn.rollback()
@@ -183,9 +187,11 @@ def init_db():
             date TEXT NOT NULL,
             slot TEXT NOT NULL,
             activity TEXT NOT NULL,
+            delta INTEGER DEFAULT 0,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+
     c.execute('''
         CREATE TABLE IF NOT EXISTS daily_summary (
             id SERIAL PRIMARY KEY,
@@ -218,7 +224,7 @@ def bonus_stats():
         # 成功数（delta=10 → 高度が加算された記録）
         cur.execute("""
             SELECT COUNT(*) FROM logs 
-            WHERE activity = %s AND date >= (CURRENT_DATE - INTERVAL '6 days')
+            WHERE activity = %s AND delta = 10 AND date >= (CURRENT_DATE - INTERVAL '6 days')
         """, (action,))
         success = cur.fetchone()[0]
 

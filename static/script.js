@@ -142,37 +142,31 @@ async function showBonusQuestions() {
     questionText.innerText = actions[index].text;
   
     function handleAnswer(answer) {
-        const yesNoButtons = document.getElementById("yes-no-buttons");
-
-        // delta は「はい」なら10、「いいえ」なら0
-        const deltaValue = (answer === "はい") ? 10 : 0;
-      
-        fetch("/log", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: actions[index].action,
-            slot: "-"
-          })
-        });
-      
-        index++;
-        if (index < actions.length) {
-            questionText.innerText = actions[index].text;  // 
-        } else {
-          yesNoButtons.style.display = "none";
-          startMainQuestions(); // 通常の質問開始
-        }
+      const deltaValue = (answer === "はい") ? 10 : 0;
+  
+      fetch("/log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: actions[index].action,
+          slot: "-",
+          delta: deltaValue
+        })
+      });
+  
+      index++;
+      if (index < actions.length) {
+        questionText.innerText = actions[index].text;
+      } else {
+        popup.classList.add("hidden");  // ← ポップアップを閉じる
+        startMainQuestions();
       }
+    }
   
     yesButton.onclick = () => handleAnswer("はい");
     noButton.onclick = () => handleAnswer("いいえ");
   }
   
-
-function startMainQuestions() {
-    askNextSlot();
-}
 
 function getSlots(dateStr) {
     const slots = [];
