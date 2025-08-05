@@ -142,6 +142,8 @@ async function showBonusQuestions() {
     questionText.innerText = actions[index].text;
   
     function handleAnswer(answer) {
+        const yesNoButtons = document.getElementById("yes-no-buttons");
+
         // delta は「はい」なら10、「いいえ」なら0
         const deltaValue = (answer === "はい") ? 10 : 0;
       
@@ -150,7 +152,6 @@ async function showBonusQuestions() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             action: actions[index].action,
-            delta: deltaValue,
             slot: "-"
           })
         });
@@ -207,7 +208,7 @@ function sendActivityToServer(slot, activity) {
     fetch("/log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slot: slot, action: activity, delta: getPoint(activity) })
+        body: JSON.stringify({ slot: slot, action: activity })
     });
 }
 
