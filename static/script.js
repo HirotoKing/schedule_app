@@ -367,7 +367,7 @@ async function showHistoryPopup(data) {
         summaryList.appendChild(li);
     }
 
-    // 🎯 ボーナス統計を表示
+    // ボーナス質問の達成率を表示
     const bonusRes = await fetch("/bonus_stats");
     const bonusStats = await bonusRes.json();
 

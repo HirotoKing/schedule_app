@@ -206,24 +206,43 @@ def bonus_stats():
     conn = get_connection()
     cur = conn.cursor()
 
-    # ボーナス対象アクション
     bonus_actions = ["スマホ制限", "早寝早起き"]
     result = {}
 
+    # JST の現在時刻（6時前なら前日扱い）
+    now = datetime.utcnow() + timedelta(hours=9)
+    if now.hour < 6:
+        now -= timedelta(days=1)
+    today_str = now.strftime("%Y-%m-%d")
+    week_ago_str = (now - timedelta(days=6)).strftime("%Y-%m-%d")
+
     for action in bonus_actions:
-        # 達成（delta=10）の回数（過去7日分）
+        # 総数（この7日間での回答）
         cur.execute("""
-            SELECT COUNT(*) FROM logs 
-            WHERE activity = %s AND slot = '-' AND delta = 10 AND date >= (CURRENT_DATE - INTERVAL '6 days')
-        """, (action,))
-        count = cur.fetchone()[0]
+            SELECT COUNT(*) FROM logs
+            WHERE activity = %s AND date BETWEEN %s AND %s
+        """, (action, week_ago_str, today_str))
+        total = cur.fetchone()[0]
+
+        # 成功数（delta = 10）
+        cur.execute("""
+            SELECT COUNT(*) FROM logs
+            WHERE activity = %s AND slot = '-' AND delta = 10 AND date BETWEEN %s AND %s
+        """, (action, week_ago_str, today_str))
+        success = cur.fetchone()[0]
+
+        rate = f"{round((success / total) * 100)}%" if total > 0 else "0%"
 
         result[action] = {
-            "直近7日間の達成数": count
+            "成功": success,
+            "合計": total,
+            "達成率": rate
         }
 
     conn.close()
+    print("bonus_stats called", file=sys.stderr)
     return jsonify(result)
+
 
 
 
