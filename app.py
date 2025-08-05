@@ -3,7 +3,6 @@ from datetime import datetime
 import os
 import psycopg2
 import urllib.parse
-import sys
 
 app = Flask(__name__)
 
@@ -241,7 +240,6 @@ def bonus_stats():
         }
 
     conn.close()
-    print("bonus_stats called", file=sys.stderr)
     return jsonify(result)
 
 
