@@ -53,7 +53,7 @@ def log_action():
         cur.execute("INSERT INTO daily_summary (date) VALUES (%s)", (today,))
 
     try:
-        cur.execute("INSERT INTO logs (date, slot, activity) VALUES (%s, %s, %s)", (today, slot, action))
+        cur.execute("INSERT INTO logs (date, slot, activity, delta) VALUES (%s, %s, %s, %s)", (today, slot, action, delta))
     except Exception as e:
         print("ログの記録に失敗:", e)
         conn.rollback()
@@ -71,35 +71,44 @@ def log_action():
     }
     col = column_map.get(action)
     if col:
+        # カウント付きで更新
         cur.execute(f"""
             UPDATE daily_summary
             SET {col} = {col} + 1,
                 height_change = height_change + %s
             WHERE date = %s
         """, (delta, today))
+    else:
+        # 🔽 カウント更新なしだが、高度だけ更新
+        cur.execute("""
+            UPDATE daily_summary
+            SET height_change = height_change + %s
+            WHERE date = %s
+        """, (delta, today))
+
 
     conn.commit()
     conn.close()
     return jsonify({"status": "ok"})
 
 
-@app.route("/submit", methods=["POST"])
-def submit_activity():
-    data = request.get_json()
-    date = get_today()
-    slot = data.get("slot")
-    activity = data.get("activity")
+# @app.route("/submit", methods=["POST"])
+# def submit_activity():
+#     data = request.get_json()
+#     date = get_today()
+#     slot = data.get("slot")
+#     activity = data.get("activity")
 
-    if not slot or not activity:
-        return jsonify({"status": "error", "message": "Invalid data"}), 400
+#     if not slot or not activity:
+#         return jsonify({"status": "error", "message": "Invalid data"}), 400
 
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute("INSERT INTO logs (date, slot, activity) VALUES (%s, %s, %s)", (date, slot, activity))
-    conn.commit()
-    conn.close()
+#     conn = get_connection()
+#     c = conn.cursor()
+#     c.execute("INSERT INTO logs (date, slot, activity) VALUES (%s, %s, %s)", (date, slot, activity))
+#     conn.commit()
+#     conn.close()
 
-    return jsonify({"status": "ok"})
+#     return jsonify({"status": "ok"})
 
 @app.route("/summary", methods=["GET"])
 def get_summary():
