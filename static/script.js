@@ -162,6 +162,11 @@ async function showBonusQuestions() {
             if (!res.ok) {
                 const text = await res.text();  // エラーメッセージ詳細も確認
                 console.error("ログ送信失敗:", res.status, text);
+            }else {
+                // 高度変化（アニメーション付き）
+                if (deltaValue > 0) {
+                    updateAltitudeSmoothly(deltaValue);
+                }
             }
             } catch (err) {
             console.error("通信エラー:", err);
