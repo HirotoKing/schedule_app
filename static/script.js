@@ -65,10 +65,17 @@ function handleButtonClick(activity) {
     disableButtons();
     const slot = unansweredSlots[currentSlotIndex];
     const point = getPoint(activity);
-    sendActivityToServer(slot, activity);
-    updateAltitudeSmoothly(point, () => {
-        currentSlotIndex++;
-        askNextSlot();
+
+    sendActivityToServer(slot, activity).then(success => {
+        if (success) {
+            updateAltitudeSmoothly(point, () => {
+                currentSlotIndex++;
+                askNextSlot();
+            });
+        } else {
+            console.error("送信に失敗したため、高度を更新しません");
+            enableButtons();  // ボタンを再有効化してリトライ可能に
+        }
     });
 }
 
@@ -217,16 +224,24 @@ function askNextSlot() {
     document.getElementById("question").innerText = `${slot} から ${nextTime} の間、何をしていましたか？`;
 }
 
+// 修正後の sendActivityToServer 関数
 function sendActivityToServer(slot, activity) {
-    const point = getPoint(activity);  // ← ここでポイント計算
-    fetch("/log", {
+    const point = getPoint(activity);
+    return fetch("/log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            slot: slot,
-            action: activity,
-            delta: point  // ← 追加
-        })
+        body: JSON.stringify({ slot: slot, action: activity, delta: point })
+    })
+    .then(res => {
+        if (!res.ok) {
+            console.error("ログ送信失敗:", res.status);
+            return false;
+        }
+        return true;
+    })
+    .catch(err => {
+        console.error("通信エラー:", err);
+        return false;
     });
 }
 
