@@ -446,7 +446,7 @@ function checkDB() {
       const data = await res.json();
   
       if (Array.isArray(data)) {
-        let cumulative = 100;
+        let cumulative = 0;
         for (const d of data) {
             cumulative += d.height_change;
         }
