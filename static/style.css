@@ -1,3 +1,6 @@
+/* ----------------------------
+   全体レイアウト
+----------------------------- */
 body {
   margin: 0;
   font-family: sans-serif;
@@ -6,6 +9,7 @@ body {
   height: 100vh;
 }
 
+/* 上部エリア（気球・雲） */
 .top {
   flex: 1;
   position: relative;
@@ -15,7 +19,6 @@ body {
   align-items: center;
   background: #cceeff;
 }
-
 .top-bar {
   position: absolute;
   top: 10px;
@@ -23,35 +26,30 @@ body {
   z-index: 10;
 }
 
-.top-bar button {
-  position: relative;
-}
-
+/* 気球 */
 .balloon {
   width: 200px;
   animation: float 3s ease-in-out infinite;
   transition: transform 0.3s ease-out;
 }
-
 .altimeter {
   font-size: 1.5rem;
   margin-top: 10px;
 }
 
+/* 下部エリア（ボタン・質問） */
 .bottom {
   flex: 1;
   background: #f0f0f0;
   padding: 10px;
   text-align: center;
 }
-
 .button-grid {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 10px;
 }
-
 button {
   padding: 16px;
   font-size: 1.1rem;
@@ -61,39 +59,28 @@ button {
   color: white;
   cursor: pointer;
 }
-
 button:disabled {
   background-color: #cccccc;
   color: #666666;
   cursor: not-allowed;
   opacity: 0.7;
 }
-
 .question {
   font-size: 1.2rem;
   margin-bottom: 15px;
 }
 
+/* アニメーション */
 @keyframes float {
   0% { transform: translateY(0); }
   50% { transform: translateY(-30px); }
   100% { transform: translateY(0); }
 }
-
 .floating {
   animation: float 3s ease-in-out infinite;
 }
 
-.rising {
-  animation: rise 1.5s ease-out;
-}
-
-@keyframes rise {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-30px); }
-}
-
-/* 雲の見た目と位置調整 */
+/* 雲 */
 #cloudContainer {
   position: absolute;
   top: 0;
@@ -103,7 +90,6 @@ button:disabled {
   overflow: hidden;
   z-index: 1;
 }
-
 .cloud {
   position: absolute;
   width: 280px;
@@ -114,38 +100,8 @@ button:disabled {
   transition: transform 0.5s linear;
 }
 
-@keyframes fall {
-  0%   { transform: translateY(0px); }
-  100% { transform: translateY(100px); }
-}
-
-.cloud.falling {
-  animation: fall 2s linear forwards;
-}
-
-/* ポップアップスタイル */
+/* ポップアップ */
 .popup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-.popup-content {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-}
-.hidden {
-  display: none;
-}
-/* .popup {
   position: fixed;
   top: 0;
   left: 0;
@@ -156,9 +112,8 @@ button:disabled {
   align-items: center;
   justify-content: center;
   z-index: 999;
-} */
-
-/* .popup-content {
+}
+.popup-content {
   background: #fff;
   padding: 20px;
   border-radius: 8px;
@@ -167,19 +122,9 @@ button:disabled {
   box-shadow: 0 4px 8px rgba(0,0,0,0.3);
   text-align: left;
 }
-
-.hidden {
-  display: none;
-} */
-
+.hidden { display: none; }
 .close-btn {
   float: right;
   font-size: 1.5rem;
   cursor: pointer;
-}
-
-.day-summary {
-  margin-bottom: 1.5em;
-  padding: 0.5em;
-  border-bottom: 1px solid #ccc;
 }

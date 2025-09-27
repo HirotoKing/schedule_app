@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
@@ -7,26 +8,25 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+
+  <!-- 上部エリア -->
   <div class="top">
+    <!-- 雲コンテナ -->
     <div id="cloudContainer"></div>
+
+    <!-- 上部メニュー -->
     <div class="top-bar">
       <button id="historyBtn">移動履歴</button>
     </div>
+
+    <!-- 気球と高度表示 -->
     <img src="{{ url_for('static', filename='balloon.png') }}" class="balloon" id="balloon" alt="気球" />
-    <div class="altimeter" id="altimeter" data-altitude="100">高度：100m</div>
+    <div class="altimeter" id="altimeter" data-altitude="0">高度：0m</div>
     <div id="warning" class="warning"></div>
   </div>
 
+  <!-- 下部エリア -->
   <div class="bottom">
-    <!-- ボーナス質問ポップアップ -->
-    <div id="bonusPopup" class="popup hidden">
-      <div class="popup-content">
-        <p id="bonusQuestionText"></p>
-        <button id="bonusYes">はい</button>
-        <button id="bonusNo">いいえ</button>
-      </div>
-    </div>
-
     <div id="question" class="question">読み込み中...</div>
     <div class="button-grid">
       <button onclick="handleButtonClick('寝食')">寝食</button>
@@ -39,23 +39,29 @@
     <div id="todayDate" class="today-date"></div>
   </div>
 
-  <div id="historyPopup" class="popup hidden">
+  <!-- ボーナス質問ポップアップ -->
+  <div id="bonusPopup" class="popup hidden">
     <div class="popup-content">
-      <span id="closePopup" class="close-btn">×</span>
-      <h3>累積高度の推移</h3>
-      <canvas id="heightChart" width="300" height="200"></canvas>
-      <h4>各行動の総合回数</h4>
-      <ul id="summaryList"></ul>
-      <ul id="bonusStatsList"></ul>
+      <h3>初回ログインボーナス 🎁</h3>
+      <p>以下の質問に答えてください（正直に！）</p>
+      <label><input type="checkbox" id="q1"> 昨日のスマホ操作時間は6時間以下だった</label><br>
+      <label><input type="checkbox" id="q2"> 昨日は24:00より前に寝て、今日は7:00に起きた</label>
+      <button id="bonusSubmit">回答してスタート</button>
     </div>
   </div>
 
-  <!-- デバッグ用: DB状態表示ボタン -->
-  <div style="text-align:center; margin-top: 10px;">
-    <button onclick="checkDB()">直近三日間の詳細</button>
-    <div id="dbStatus" style="white-space: pre-wrap; font-size: 0.9em; color: #333; margin-top: 10px;"></div>
+  <!-- 移動履歴ポップアップ -->
+  <div id="historyPopup" class="popup hidden">
+    <div class="popup-content">
+      <span id="closePopup" class="close-btn">×</span>
+      <h3>今までの高度推移</h3>
+      <canvas id="heightChart" width="300" height="150"></canvas>
+      <h4>活動回数の合計</h4>
+      <ul id="summaryList"></ul>
+    </div>
   </div>
 
+  <!-- スクリプト -->
   <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
