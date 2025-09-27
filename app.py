@@ -252,9 +252,9 @@ def bonus_stats():
     with db() as conn:
         cur = conn.cursor()
         cur.execute("""
-            SELECT date, activity FROM logs
+            SELECT date::date, activity FROM logs
              WHERE activity LIKE 'bonus_%'
-               AND date >= (CURRENT_DATE - INTERVAL '6 days')
+               AND date::date >= (CURRENT_DATE - INTERVAL '6 days')
         """)
         rows = cur.fetchall()
 
@@ -275,6 +275,7 @@ def bonus_stats():
         "スマホ6時間": {"success": s1_success, "total": total},
         "早寝早起き": {"success": s2_success, "total": total}
     })
+
 
 @app.route("/current_altitude")
 def current_altitude():
