@@ -170,7 +170,6 @@ function showBonusQuestions() {
         popup.classList.add("hidden");
 
         if (bonus > 0) {
-            // サーバーに反映
             await fetch("/apply_bonus", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -286,7 +285,9 @@ function showHistoryPopup(data) {
     const heights = data.map(d => d.height);
 
     const ctx = document.getElementById("heightChart").getContext("2d");
-    if (window.heightChart) window.heightChart.destroy();
+    if (window.heightChart && typeof window.heightChart.destroy === "function") {
+        window.heightChart.destroy();
+    }
     window.heightChart = new Chart(ctx, {
         type: "line",
         data: {
