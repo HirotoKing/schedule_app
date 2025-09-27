@@ -300,15 +300,24 @@ document.getElementById("weekBtn").addEventListener("click", () => {
             } else {
                 last7Days.forEach(day => {
                     const tr = document.createElement("tr");
+
+                    // 回数 → 時間換算（0.5h単位, 小数点1桁）
+                    const sleepEat = (day["寝食"] * 0.5).toFixed(1);
+                    const work     = (day["仕事"] * 0.5).toFixed(1);
+                    const think    = (day["知的活動"] * 0.5).toFixed(1);
+                    const study    = (day["勉強"] * 0.5).toFixed(1);
+                    const exercise = (day["運動"] * 0.5).toFixed(1);
+                    const game     = (day["ゲーム"] * 0.5).toFixed(1);
+
                     tr.innerHTML = `
                         <td>${day.date}</td>
-                        <td>${day["寝食"]}</td>
-                        <td>${day["仕事"]}</td>
-                        <td>${day["知的活動"]}</td>
-                        <td>${day["勉強"]}</td>
-                        <td>${day["運動"]}</td>
-                        <td>${day["ゲーム"]}</td>
-                        <td>${day.height}</td>
+                        <td>${sleepEat}h</td>
+                        <td>${work}h</td>
+                        <td>${think}h</td>
+                        <td>${study}h</td>
+                        <td>${exercise}h</td>
+                        <td>${game}h</td>
+                        <td>${day.change}</td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -316,6 +325,7 @@ document.getElementById("weekBtn").addEventListener("click", () => {
             document.getElementById("weekPopup").classList.remove("hidden");
         });
 });
+
 
 document.getElementById("closeWeek").addEventListener("click", () => {
     document.getElementById("weekPopup").classList.add("hidden");

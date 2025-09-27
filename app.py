@@ -219,7 +219,8 @@ def summary_all():
         cur = conn.cursor()
         cur.execute("""
             SELECT date, sleep_eat_count, work_count, thinking_count,
-                   study_count, exercise_count, game_count, cumulative_height
+                   study_count, exercise_count, game_count,
+                   cumulative_height, height_change
               FROM daily_summary
              ORDER BY date ASC
         """)
@@ -235,8 +236,10 @@ def summary_all():
             "運動": row[5],
             "ゲーム": row[6],
             "height": row[7],
+            "change": row[8],   # 高度変化量
         })
     return jsonify(result)
+
 
 @app.route("/bonus_status")
 def bonus_status():
