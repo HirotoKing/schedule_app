@@ -169,12 +169,13 @@ function showBonusQuestions() {
 
         popup.classList.add("hidden");
 
+        await fetch("/apply_bonus", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ bonus, q1, q2 })
+        });
+
         if (bonus > 0) {
-            await fetch("/apply_bonus", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ bonus })
-            });
             updateAltitudeSmoothly(bonus, () => {
                 startMainQuestions();
             });
@@ -280,6 +281,46 @@ document.getElementById("closePopup").addEventListener("click", () => {
     document.getElementById("historyPopup").classList.add("hidden");
 });
 
+document.getElementById("weekBtn").addEventListener("click", () => {
+    fetch("/summary_all")
+        .then(res => res.json())
+        .then(data => {
+            const today = new Date(); today.setHours(0,0,0,0);
+            const last7Days = data.filter(d => {
+                const dDate = new Date(d.date);
+                return (today - dDate) / (1000 * 60 * 60 * 24) <= 6;
+            });
+
+            const tbody = document.querySelector("#weekTable tbody");
+            tbody.innerHTML = "";
+            if (last7Days.length === 0) {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td colspan="8">データがありません</td>`;
+                tbody.appendChild(tr);
+            } else {
+                last7Days.forEach(day => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${day.date}</td>
+                        <td>${day["寝食"]}</td>
+                        <td>${day["仕事"]}</td>
+                        <td>${day["知的活動"]}</td>
+                        <td>${day["勉強"]}</td>
+                        <td>${day["運動"]}</td>
+                        <td>${day["ゲーム"]}</td>
+                        <td>${day.height}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            document.getElementById("weekPopup").classList.remove("hidden");
+        });
+});
+
+document.getElementById("closeWeek").addEventListener("click", () => {
+    document.getElementById("weekPopup").classList.add("hidden");
+});
+
 function showHistoryPopup(data) {
     const labels = data.map(d => d.date);
     const heights = data.map(d => d.height);
@@ -318,6 +359,22 @@ function showHistoryPopup(data) {
         li.textContent = `${key}：${totalCounts[key]} 回`;
         summaryList.appendChild(li);
     }
+
+    // --- ボーナス達成率の追加 ---
+    fetch("/bonus_stats")
+        .then(res => res.json())
+        .then(stats => {
+            const s1 = stats["スマホ6時間"];
+            const s2 = stats["早寝早起き"];
+
+            const li1 = document.createElement("li");
+            li1.textContent = `スマホ6時間: ${Math.round((s1.success / s1.total) * 100)}% (${s1.success}/${s1.total})`;
+            summaryList.appendChild(li1);
+
+            const li2 = document.createElement("li");
+            li2.textContent = `早寝早起き: ${Math.round((s2.success / s2.total) * 100)}% (${s2.success}/${s2.total})`;
+            summaryList.appendChild(li2);
+        });
 
     document.getElementById("historyPopup").classList.remove("hidden");
 }

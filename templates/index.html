@@ -17,6 +17,7 @@
     <!-- 上部メニュー -->
     <div class="top-bar">
       <button id="historyBtn">移動履歴</button>
+      <button id="weekBtn">直近1週間</button>
     </div>
 
     <!-- 気球と高度表示 -->
@@ -60,6 +61,25 @@
       <ul id="summaryList"></ul>
     </div>
   </div>
+  
+  <!-- 1週間サマリーポップアップ -->
+  <div id="weekPopup" class="popup hidden">
+    <div class="popup-content">
+      <span id="closeWeek" class="close-btn">×</span>
+      <h3>直近1週間のサマリー</h3>
+      <table id="weekTable" border="1" style="width:100%; text-align:center;">
+        <thead>
+          <tr>
+            <th>日付</th>
+            <th>寝食</th><th>仕事</th><th>知的活動</th>
+            <th>勉強</th><th>運動</th><th>ゲーム</th>
+            <th>累積高度</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>  
 
   <!-- スクリプト -->
   <script src="{{ url_for('static', filename='script.js') }}"></script>

@@ -7,13 +7,10 @@ from contextlib import contextmanager
 # ----------------------------
 # Config
 # ----------------------------
-INITIAL_HEIGHT = 0          # 初期の累積高度を 0 に統一
-MIN_HEIGHT = 0              # 累積高度の下限
+INITIAL_HEIGHT = 0
+MIN_HEIGHT = 0
 DB_URL_ENV_KEY = "DATABASE_URL"
 
-# ----------------------------
-# App
-# ----------------------------
 app = Flask(__name__)
 DATABASE_URL = os.environ.get(DB_URL_ENV_KEY)
 
@@ -30,10 +27,6 @@ def db() -> psycopg2.extensions.connection:
         conn.close()
 
 def get_today() -> str:
-    """
-    ローカル時刻で 06:00 未満は前日扱い。
-    返り値は 'YYYY-MM-DD' 文字列。
-    """
     now = datetime.now()
     if now.hour < 6:
         now = now - timedelta(days=1)
@@ -69,7 +62,6 @@ def init_db():
         """)
 
 def ensure_summary_row(date_str: str):
-    """daily_summary に date の行がなければ初期値で作成"""
     with db() as conn:
         cur = conn.cursor()
         cur.execute("SELECT 1 FROM daily_summary WHERE date = %s", (date_str,))
@@ -91,13 +83,8 @@ COLUMN_MAP = {
 }
 
 def apply_delta(date_str: str, delta: int, activity: str | None = None):
-    """
-    累積高度と当日変化を更新。必要なら行動カウントも加算。
-    累積高度は MIN_HEIGHT 未満にならないよう抑止。
-    """
     with db() as conn:
         cur = conn.cursor()
-
         if activity and activity in COLUMN_MAP:
             col = COLUMN_MAP[activity]
             cur.execute(
@@ -130,10 +117,6 @@ def index():
 
 @app.route("/log", methods=["POST"])
 def log_action():
-    """
-    行動ログと高度反映。slot は任意。
-    期待する JSON: { action: str, delta: int, slot?: str }
-    """
     data = request.json or {}
     action = data.get("action")
     try:
@@ -156,15 +139,14 @@ def log_action():
 
 @app.route("/apply_bonus", methods=["POST"])
 def apply_bonus():
-    """
-    ボーナス反映。二重付与防止のため bonus_given を確認してから更新。
-    期待する JSON: { bonus: int }
-    """
     data = request.json or {}
     try:
         bonus = int(data.get("bonus", 0))
     except (TypeError, ValueError):
         bonus = 0
+
+    q1 = data.get("q1", False)
+    q2 = data.get("q2", False)
 
     today = get_today()
     ensure_summary_row(today)
@@ -174,17 +156,31 @@ def apply_bonus():
         cur.execute("SELECT bonus_given FROM daily_summary WHERE date = %s", (today,))
         row = cur.fetchone()
         already = bool(row and row[0])
-        if not already and bonus != 0:
-            cur.execute(
-                """
-                UPDATE daily_summary
-                   SET bonus_given = TRUE,
-                       height_change = height_change + %s,
-                       cumulative_height = GREATEST(cumulative_height + %s, %s)
-                 WHERE date = %s
-                """,
-                (bonus, bonus, MIN_HEIGHT, today),
-            )
+        if not already:
+            if bonus != 0:
+                cur.execute(
+                    """
+                    UPDATE daily_summary
+                       SET bonus_given = TRUE,
+                           height_change = height_change + %s,
+                           cumulative_height = GREATEST(cumulative_height + %s, %s)
+                     WHERE date = %s
+                    """,
+                    (bonus, bonus, MIN_HEIGHT, today),
+                )
+            # ボーナスログ記録
+            if q1:
+                cur.execute("INSERT INTO logs (date, slot, activity, delta) VALUES (%s, %s, %s, %s)",
+                            (today, "-", "bonus_スマホ6h", 10))
+            else:
+                cur.execute("INSERT INTO logs (date, slot, activity, delta) VALUES (%s, %s, %s, %s)",
+                            (today, "-", "bonus_スマホ6h失敗", 0))
+            if q2:
+                cur.execute("INSERT INTO logs (date, slot, activity, delta) VALUES (%s, %s, %s, %s)",
+                            (today, "-", "bonus_早寝早起き", 10))
+            else:
+                cur.execute("INSERT INTO logs (date, slot, activity, delta) VALUES (%s, %s, %s, %s)",
+                            (today, "-", "bonus_早寝早起き失敗", 0))
     return jsonify({"status": "ok", "applied": (bonus != 0 and not already)})
 
 @app.route("/answered_slots")
@@ -192,7 +188,6 @@ def answered_slots():
     date_str = request.args.get("date")
     if not date_str:
         return jsonify([])
-
     with db() as conn:
         cur = conn.cursor()
         cur.execute("SELECT slot FROM logs WHERE date = %s AND slot IS NOT NULL", (date_str,))
@@ -206,14 +201,12 @@ def get_summary():
         cur = conn.cursor()
         cur.execute("SELECT * FROM daily_summary WHERE date = %s", (today,))
         row = cur.fetchone()
-
     if not row:
         return jsonify({
             "寝食": 0, "仕事": 0, "知的活動": 0,
             "勉強": 0, "運動": 0, "ゲーム": 0,
             "高度": INITIAL_HEIGHT
         })
-
     return jsonify({
         "寝食": row[2], "仕事": row[3], "知的活動": row[4],
         "勉強": row[5], "運動": row[6], "ゲーム": row[7],
@@ -231,7 +224,6 @@ def summary_all():
              ORDER BY date ASC
         """)
         rows = cur.fetchall()
-
     result = []
     for row in rows:
         result.append({
@@ -255,6 +247,35 @@ def bonus_status():
         row = cur.fetchone()
     return jsonify({"bonusGiven": bool(row[0]) if row else False})
 
+@app.route("/bonus_stats")
+def bonus_stats():
+    with db() as conn:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT date, activity FROM logs
+             WHERE activity LIKE 'bonus_%'
+               AND date >= (CURRENT_DATE - INTERVAL '6 days')
+        """)
+        rows = cur.fetchall()
+
+    days = {}
+    for date, activity in rows:
+        if date not in days:
+            days[date] = {"スマホ6時間": False, "早寝早起き": False}
+        if activity == "bonus_スマホ6h":
+            days[date]["スマホ6時間"] = True
+        if activity == "bonus_早寝早起き":
+            days[date]["早寝早起き"] = True
+
+    total = 7
+    s1_success = sum(1 for v in days.values() if v["スマホ6時間"])
+    s2_success = sum(1 for v in days.values() if v["早寝早起き"])
+
+    return jsonify({
+        "スマホ6時間": {"success": s1_success, "total": total},
+        "早寝早起き": {"success": s2_success, "total": total}
+    })
+
 @app.route("/current_altitude")
 def current_altitude():
     today = get_today()
@@ -264,9 +285,6 @@ def current_altitude():
         row = cur.fetchone()
     return jsonify({"altitude": int(row[0]) if row else int(INITIAL_HEIGHT)})
 
-# ----------------------------
-# Init & Run
-# ----------------------------
 init_db()
 
 if __name__ == "__main__":
