@@ -67,11 +67,16 @@ def ensure_summary_row(date_str: str):
         cur.execute("SELECT 1 FROM daily_summary WHERE date = %s", (date_str,))
         exists = cur.fetchone() is not None
         if not exists:
+            # 昨日の累積高度を引き継ぐ
+            cur.execute("SELECT cumulative_height FROM daily_summary ORDER BY date DESC LIMIT 1")
+            prev = cur.fetchone()
+            prev_height = prev[0] if prev else INITIAL_HEIGHT
             cur.execute("""
                 INSERT INTO daily_summary
                     (date, cumulative_height, height_change, bonus_given)
                 VALUES (%s, %s, %s, %s)
-            """, (date_str, INITIAL_HEIGHT, 0, False))
+            """, (date_str, prev_height, 0, False))
+
 
 COLUMN_MAP = {
     "寝食": "sleep_eat_count",
