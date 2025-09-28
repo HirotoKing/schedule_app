@@ -156,8 +156,10 @@ def apply_bonus():
         cur.execute("SELECT bonus_given FROM daily_summary WHERE date = %s", (today,))
         row = cur.fetchone()
         already = bool(row and row[0])
+
         if not already:
-            if bonus != 0:
+            # 回答済みにする
+            if bonus > 0:
                 cur.execute(
                     """
                     UPDATE daily_summary
@@ -168,7 +170,10 @@ def apply_bonus():
                     """,
                     (bonus, bonus, MIN_HEIGHT, today),
                 )
-            # ボーナスログ記録
+            else:
+                cur.execute("UPDATE daily_summary SET bonus_given = TRUE WHERE date = %s", (today,))
+
+            # ログ記録
             if q1:
                 cur.execute("INSERT INTO logs (date, slot, activity, delta) VALUES (%s, %s, %s, %s)",
                             (today, "-", "bonus_スマホ6h", 10))
@@ -181,7 +186,9 @@ def apply_bonus():
             else:
                 cur.execute("INSERT INTO logs (date, slot, activity, delta) VALUES (%s, %s, %s, %s)",
                             (today, "-", "bonus_早寝早起き失敗", 0))
-    return jsonify({"status": "ok", "applied": (bonus != 0 and not already)})
+
+    return jsonify({"status": "ok", "applied": (not already)})
+
 
 @app.route("/answered_slots")
 def answered_slots():
