@@ -295,11 +295,14 @@ def bonus_stats():
 @app.route("/current_altitude")
 def current_altitude():
     today = get_today()
+    # 今日の行がまだ無ければ、ここで必ず作る（昨日の高度を引き継ぐ）
+    ensure_summary_row(today)
     with db() as conn:
         cur = conn.cursor()
         cur.execute("SELECT cumulative_height FROM daily_summary WHERE date = %s", (today,))
         row = cur.fetchone()
     return jsonify({"altitude": int(row[0]) if row else int(INITIAL_HEIGHT)})
+
 
 init_db()
 
