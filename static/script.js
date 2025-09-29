@@ -168,6 +168,7 @@ function showBonusQuestions() {
     const popup = document.getElementById("bonusPopup");
     popup.classList.remove("hidden");
 
+    // ボーナス回答ボタン
     document.getElementById("bonusSubmit").onclick = async () => {
         const q1 = document.getElementById("q1").checked;
         const q2 = document.getElementById("q2").checked;
@@ -175,15 +176,22 @@ function showBonusQuestions() {
         if (q1) bonus += 10;
         if (q2) bonus += 10;
 
-        popup.classList.add("hidden");
+        document.getElementById("bonusPopup").classList.add("hidden");
 
-        await fetch("/apply_bonus", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bonus, q1, q2 })
-        });
+        // --- バックアップをトリガーしてダウンロード ---
+        const link = document.createElement("a");
+        link.href = "/backup_now";
+        link.download = ""; // Flask側で付与したファイル名が適用される
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
         if (bonus > 0) {
+            await fetch("/apply_bonus", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ bonus, q1, q2 })
+            });
             updateAltitudeSmoothly(bonus, () => {
                 startMainQuestions();
             });
@@ -191,6 +199,7 @@ function showBonusQuestions() {
             startMainQuestions();
         }
     };
+
 }
 
 function startMainQuestions() {
