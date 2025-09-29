@@ -353,7 +353,9 @@ document.getElementById("weekBtn").addEventListener("click", () => {
 
             // --- 円グラフ描画 ---
             const ctx = document.getElementById("weekChart").getContext("2d");
-            if (window.weekChart) window.weekChart.destroy();
+            if (window.weekChart && typeof window.weekChart.destroy === "function") {
+                window.weekChart.destroy();
+            }
             window.weekChart = new Chart(ctx, {
                 type: "doughnut",
                 data: {
@@ -377,6 +379,7 @@ document.getElementById("weekBtn").addEventListener("click", () => {
                 },
                 plugins: [centerText]
             });
+
 
             document.getElementById("weekPopup").classList.remove("hidden");
         });
