@@ -302,31 +302,46 @@ document.getElementById("weekBtn").addEventListener("click", () => {
     fetch("/summary_all")
         .then(res => res.json())
         .then(data => {
-            const today = new Date();
+            const today = new Date(); today.setHours(0,0,0,0);
             const last7Days = data.filter(d => {
                 const dDate = new Date(d.date);
                 return (today - dDate) / (1000 * 60 * 60 * 24) <= 6;
             });
 
-            // --- テーブル描画 ---
             const tbody = document.querySelector("#weekTable tbody");
             tbody.innerHTML = "";
-            last7Days.forEach(day => {
+            if (last7Days.length === 0) {
                 const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td>${day.date}</td>
-                    <td>${day["仕事"]}</td>
-                    <td>${day["知的活動"]}</td>
-                    <td>${day["勉強"]}</td>
-                    <td>${day["運動"]}</td>
-                    <td>${day["ゲーム"]}</td>
-                    <td>${day.height_change}</td>
-                `;
+                tr.innerHTML = `<td colspan="8">データがありません</td>`;
                 tbody.appendChild(tr);
-            });
+            } else {
+                last7Days.forEach(day => {
+                    const tr = document.createElement("tr");
 
-            // --- 円グラフ用データ集計（寝食を除外） ---
-            const totalCounts = { "仕事": 0, "知的活動": 0, "勉強": 0, "運動": 0, "ゲーム": 0 };
+                    // 回数 → 時間換算（0.5h単位, 小数点1桁）
+                    const sleepEat = (day["寝食"] * 0.5).toFixed(1);
+                    const work     = (day["仕事"] * 0.5).toFixed(1);
+                    const think    = (day["知的活動"] * 0.5).toFixed(1);
+                    const study    = (day["勉強"] * 0.5).toFixed(1);
+                    const exercise = (day["運動"] * 0.5).toFixed(1);
+                    const game     = (day["ゲーム"] * 0.5).toFixed(1);
+
+                    tr.innerHTML = `
+                        <td>${day.date}</td>
+                        <td>${sleepEat}h</td>
+                        <td>${work}h</td>
+                        <td>${think}h</td>
+                        <td>${study}h</td>
+                        <td>${exercise}h</td>
+                        <td>${game}h</td>
+                        <td>${day.height_change ?? day.change ?? 0}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // --- 円グラフ用データ集計（寝食も含む） ---
+            const totalCounts = { "寝食": 0, "仕事": 0, "知的活動": 0, "勉強": 0, "運動": 0, "ゲーム": 0 };
             last7Days.forEach(day => {
                 for (const key in totalCounts) {
                     totalCounts[key] += day[key];
@@ -334,8 +349,8 @@ document.getElementById("weekBtn").addEventListener("click", () => {
             });
 
             const labels = Object.keys(totalCounts);
-            const values = Object.values(totalCounts).map(v => v * 0.5); // h換算
-            const totalHours = values.reduce((a, b) => a + b, 0).toFixed(1);
+            const values = Object.values(totalCounts).map(v => (v * 0.5).toFixed(1));
+            const totalHours = values.reduce((a, b) => parseFloat(a) + parseFloat(b), 0).toFixed(1);
 
             // --- 中央に合計時間を表示するプラグイン ---
             const centerText = {
@@ -362,7 +377,7 @@ document.getElementById("weekBtn").addEventListener("click", () => {
                     labels: labels,
                     datasets: [{
                         data: values,
-                        backgroundColor: ["#87CEEB", "#FF7F50", "#90EE90", "#9370DB", "#FF6347"]
+                        backgroundColor: ["#FFD700", "#87CEEB", "#FF7F50", "#90EE90", "#9370DB", "#FF6347"]
                     }]
                 },
                 options: {
@@ -380,11 +395,9 @@ document.getElementById("weekBtn").addEventListener("click", () => {
                 plugins: [centerText]
             });
 
-
             document.getElementById("weekPopup").classList.remove("hidden");
         });
 });
-
 
 
 
@@ -449,7 +462,6 @@ function showHistoryPopup(data) {
 
     document.getElementById("historyPopup").classList.remove("hidden");
 }
-
 
 // ----------------------------
 // 初期ロード
