@@ -256,11 +256,14 @@ def summary_all():
 @app.route("/bonus_status")
 def bonus_status():
     today = get_today()
+    # 今日の行がまだなければ必ず作る（昨日の高度を引き継いで初期化）
+    ensure_summary_row(today)
     with db() as conn:
         cur = conn.cursor()
         cur.execute("SELECT bonus_given FROM daily_summary WHERE date = %s", (today,))
         row = cur.fetchone()
     return jsonify({"bonusGiven": bool(row[0]) if row else False})
+
 
 @app.route("/bonus_stats")
 def bonus_stats():
