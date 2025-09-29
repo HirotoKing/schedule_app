@@ -109,13 +109,21 @@ function getSlots(dateStr) {
     const slots = [];
     const start = new Date(`${dateStr}T06:00:00`);
     const end = new Date(start.getTime() + 19 * 60 * 60 * 1000);
-    for (let t = new Date(start); t < end; t.setMinutes(t.getMinutes() + 30)) {
+
+    // 現在時刻
+    const now = new Date();
+
+    // もし日付が違ったら強制的に1日の終わりを上限にする
+    const limit = (now > end) ? end : now;
+
+    for (let t = new Date(start); t < limit; t.setMinutes(t.getMinutes() + 30)) {
         const h = String(t.getHours()).padStart(2, "0");
         const m = String(t.getMinutes()).padStart(2, "0");
         slots.push(`${h}:${m}`);
     }
     return slots;
 }
+
 
 function askNextSlot() {
     if (currentSlotIndex >= unansweredSlots.length) {
