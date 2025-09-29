@@ -26,11 +26,17 @@ def db() -> psycopg2.extensions.connection:
     finally:
         conn.close()
 
+from datetime import datetime, timedelta, timezone
+
+# 日本時間 (UTC+9)
+JST = timezone(timedelta(hours=9))
+
 def get_today() -> str:
-    now = datetime.now()
+    now = datetime.now(JST)  # ← JSTで現在時刻を取得
     if now.hour < 6:
         now = now - timedelta(days=1)
     return now.strftime("%Y-%m-%d")
+
 
 def init_db():
     with db() as conn:
