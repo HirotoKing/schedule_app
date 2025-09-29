@@ -302,46 +302,87 @@ document.getElementById("weekBtn").addEventListener("click", () => {
     fetch("/summary_all")
         .then(res => res.json())
         .then(data => {
-            const today = new Date(); today.setHours(0,0,0,0);
+            const today = new Date();
             const last7Days = data.filter(d => {
                 const dDate = new Date(d.date);
                 return (today - dDate) / (1000 * 60 * 60 * 24) <= 6;
             });
 
+            // --- テーブル描画 ---
             const tbody = document.querySelector("#weekTable tbody");
             tbody.innerHTML = "";
-            if (last7Days.length === 0) {
+            last7Days.forEach(day => {
                 const tr = document.createElement("tr");
-                tr.innerHTML = `<td colspan="8">データがありません</td>`;
+                tr.innerHTML = `
+                    <td>${day.date}</td>
+                    <td>${day["仕事"]}</td>
+                    <td>${day["知的活動"]}</td>
+                    <td>${day["勉強"]}</td>
+                    <td>${day["運動"]}</td>
+                    <td>${day["ゲーム"]}</td>
+                    <td>${day.height_change}</td>
+                `;
                 tbody.appendChild(tr);
-            } else {
-                last7Days.forEach(day => {
-                    const tr = document.createElement("tr");
+            });
 
-                    // 回数 → 時間換算（0.5h単位, 小数点1桁）
-                    const sleepEat = (day["寝食"] * 0.5).toFixed(1);
-                    const work     = (day["仕事"] * 0.5).toFixed(1);
-                    const think    = (day["知的活動"] * 0.5).toFixed(1);
-                    const study    = (day["勉強"] * 0.5).toFixed(1);
-                    const exercise = (day["運動"] * 0.5).toFixed(1);
-                    const game     = (day["ゲーム"] * 0.5).toFixed(1);
+            // --- 円グラフ用データ集計（寝食を除外） ---
+            const totalCounts = { "仕事": 0, "知的活動": 0, "勉強": 0, "運動": 0, "ゲーム": 0 };
+            last7Days.forEach(day => {
+                for (const key in totalCounts) {
+                    totalCounts[key] += day[key];
+                }
+            });
 
-                    tr.innerHTML = `
-                        <td>${day.date}</td>
-                        <td>${sleepEat}h</td>
-                        <td>${work}h</td>
-                        <td>${think}h</td>
-                        <td>${study}h</td>
-                        <td>${exercise}h</td>
-                        <td>${game}h</td>
-                        <td>${day.change}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
+            const labels = Object.keys(totalCounts);
+            const values = Object.values(totalCounts).map(v => v * 0.5); // h換算
+            const totalHours = values.reduce((a, b) => a + b, 0).toFixed(1);
+
+            // --- 中央に合計時間を表示するプラグイン ---
+            const centerText = {
+                id: "centerText",
+                beforeDraw(chart) {
+                    const { ctx, chartArea: { width, height } } = chart;
+                    ctx.save();
+                    ctx.font = "bold 18px sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillStyle = "#333";
+                    ctx.fillText(`${totalHours}h`, width / 2, height / 2);
+                }
+            };
+
+            // --- 円グラフ描画 ---
+            const ctx = document.getElementById("weekChart").getContext("2d");
+            if (window.weekChart) window.weekChart.destroy();
+            window.weekChart = new Chart(ctx, {
+                type: "doughnut",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: ["#87CEEB", "#FF7F50", "#90EE90", "#9370DB", "#FF6347"]
+                    }]
+                },
+                options: {
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.label}: ${context.formattedValue}h`
+                            }
+                        },
+                        legend: {
+                            position: "bottom"
+                        }
+                    }
+                },
+                plugins: [centerText]
+            });
+
             document.getElementById("weekPopup").classList.remove("hidden");
         });
 });
+
+
 
 
 document.getElementById("closeWeek").addEventListener("click", () => {
@@ -405,6 +446,7 @@ function showHistoryPopup(data) {
 
     document.getElementById("historyPopup").classList.remove("hidden");
 }
+
 
 // ----------------------------
 // 初期ロード

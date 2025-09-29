@@ -71,16 +71,20 @@
         <thead>
           <tr>
             <th>日付</th>
-            <th>寝食</th><th>仕事</th><th>知的活動</th>
+            <th>仕事</th><th>知的活動</th>
             <th>勉強</th><th>運動</th><th>ゲーム</th>
             <th>高度変化量</th>
-
           </tr>
         </thead>
         <tbody></tbody>
       </table>
+
+      <!-- 円グラフをテーブルの下に表示 -->
+      <h4>活動内訳（合計時間）</h4>
+      <canvas id="weekChart" width="300" height="300"></canvas>
     </div>
-  </div>  
+  </div>
+ 
 
   <!-- スクリプト -->
   <script src="{{ url_for('static', filename='script.js') }}"></script>
