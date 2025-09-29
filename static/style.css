@@ -141,10 +141,10 @@ button:disabled {
   color: #000;
 }
 
-@media (max-width: 480px) {
-  .close-btn {
-    font-size: 18px;
-    top: 12px;
-    right: 12px;
+@media (max-width: 600px) {
+  .popup {
+    align-items: flex-start;
+    padding-top: 80px; /* スマホならさらに余白広め */
   }
 }
+
