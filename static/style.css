@@ -19,12 +19,19 @@ body {
   align-items: center;
   background: #cceeff;
 }
-.top-bar {
+.top-bar.left {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+}
+.top-bar.right {
   position: absolute;
   top: 10px;
   right: 10px;
   z-index: 10;
 }
+
 
 /* 気球 */
 .balloon {

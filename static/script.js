@@ -178,13 +178,13 @@ function showBonusQuestions() {
 
         document.getElementById("bonusPopup").classList.add("hidden");
 
-        // --- バックアップをトリガーしてダウンロード ---
-        const link = document.createElement("a");
-        link.href = "/backup_now";
-        link.download = ""; // Flask側で付与したファイル名が適用される
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // // --- バックアップをトリガーしてダウンロード ---
+        // const link = document.createElement("a");
+        // link.href = "/backup_now";
+        // link.download = ""; // Flask側で付与したファイル名が適用される
+        // document.body.appendChild(link);
+        // link.click();
+        // document.body.removeChild(link);
 
         if (bonus > 0) {
             await fetch("/apply_bonus", {
@@ -399,6 +399,14 @@ document.getElementById("weekBtn").addEventListener("click", () => {
         });
 });
 
+document.getElementById("backupBtn").addEventListener("click", () => {
+    const link = document.createElement("a");
+    link.href = "/backup_now";
+    link.download = "";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+});
 
 
 document.getElementById("closeWeek").addEventListener("click", () => {

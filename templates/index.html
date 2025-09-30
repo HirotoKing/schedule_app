@@ -15,10 +15,14 @@
     <div id="cloudContainer"></div>
 
     <!-- 上部メニュー -->
-    <div class="top-bar">
+    <div class="top-bar left">
+      <button id="backupBtn">バックアップ</button>
+    </div>
+    <div class="top-bar right">
       <button id="historyBtn">移動履歴</button>
       <button id="weekBtn">直近1週間</button>
     </div>
+
 
     <!-- 気球と高度表示 -->
     <img src="{{ url_for('static', filename='balloon.png') }}" class="balloon" id="balloon" alt="気球" />
