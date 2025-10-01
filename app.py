@@ -338,15 +338,19 @@ def weekly_goal():
 
         # 今日の週の開始日（月曜日）
         today = datetime.now(JST).date()
-        start_of_week = today - timedelta(days=today.weekday())  # 月曜が0
+        start_of_week = today - timedelta(days=today.weekday())
         end_of_week = start_of_week + timedelta(days=6)
+
+        # TEXT カラムに合わせて文字列に変換
+        start_str = start_of_week.strftime("%Y-%m-%d")
+        end_str = end_of_week.strftime("%Y-%m-%d")
 
         # 今週の高度合計を取得
         cur.execute("""
             SELECT COALESCE(SUM(height_change), 0)
             FROM daily_summary
             WHERE date BETWEEN %s AND %s
-        """, (start_of_week, end_of_week))
+        """, (start_str, end_str))
         current_total = cur.fetchone()[0]
 
         # 仮に目標を 500m とする（後で調整可）
@@ -357,6 +361,7 @@ def weekly_goal():
         "current": current_total,
         "achieved": current_total >= weekly_target
     })
+
 
 
 
