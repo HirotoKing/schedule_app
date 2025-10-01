@@ -333,32 +333,31 @@ def backup_now():
 
 @app.route("/weekly_goal")
 def weekly_goal():
-    today = datetime.now(JST).date()
-    monday = today - timedelta(days=today.weekday())  # 今週の月曜
+    with db() as conn:
+        cur = conn.cursor()
 
-    conn = get_db_connection()
-    cur = conn.cursor()
+        # 今日の週の開始日（月曜日）
+        today = datetime.now(JST).date()
+        start_of_week = today - timedelta(days=today.weekday())  # 月曜が0
+        end_of_week = start_of_week + timedelta(days=6)
 
-    # すでに目標があるか確認
-    cur.execute("SELECT target_height, achieved FROM weekly_goals WHERE week_start = %s", (monday,))
-    row = cur.fetchone()
+        # 今週の高度合計を取得
+        cur.execute("""
+            SELECT COALESCE(SUM(height_change), 0)
+            FROM daily_summary
+            WHERE date BETWEEN %s AND %s
+        """, (start_of_week, end_of_week))
+        current_total = cur.fetchone()[0]
 
-    if not row:
-        # 現在の累積高度を取得
-        cur.execute("SELECT MAX(cumulative_height) FROM daily_summary")
-        current_height = cur.fetchone()[0] or 0
-        target_height = current_height + 500
+        # 仮に目標を 500m とする（後で調整可）
+        weekly_target = 500
 
-        cur.execute("INSERT INTO weekly_goals (week_start, target_height) VALUES (%s, %s)", (monday, target_height))
-        conn.commit()
-        achieved = False
-    else:
-        target_height, achieved = row
+    return jsonify({
+        "target": weekly_target,
+        "current": current_total,
+        "achieved": current_total >= weekly_target
+    })
 
-    cur.close()
-    conn.close()
-
-    return jsonify({"week_start": str(monday), "target": target_height, "achieved": achieved})
 
 
 init_db()
