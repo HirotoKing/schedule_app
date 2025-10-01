@@ -32,6 +32,12 @@ body {
   z-index: 10;
 }
 
+.weekly-goal {
+  font-size: 1.2rem;
+  margin-top: 5px;
+  color: #333;
+}
+
 
 /* 気球 */
 .balloon {

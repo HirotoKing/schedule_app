@@ -489,4 +489,6 @@ window.onload = async () => {
     startQuestioning(today);
     initClouds();
     maintainClouds();
+    // --- 週目標の取得 ---
+    fetchWeeklyGoal();
 };

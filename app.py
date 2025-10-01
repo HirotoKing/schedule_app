@@ -331,6 +331,35 @@ def backup_now():
     # 生成したファイルを返す（ブラウザで自動ダウンロード）
     return send_file(tmpfile.name, as_attachment=True, download_name=filename)
 
+@app.route("/weekly_goal")
+def weekly_goal():
+    today = datetime.now(JST).date()
+    monday = today - timedelta(days=today.weekday())  # 今週の月曜
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # すでに目標があるか確認
+    cur.execute("SELECT target_height, achieved FROM weekly_goals WHERE week_start = %s", (monday,))
+    row = cur.fetchone()
+
+    if not row:
+        # 現在の累積高度を取得
+        cur.execute("SELECT MAX(cumulative_height) FROM daily_summary")
+        current_height = cur.fetchone()[0] or 0
+        target_height = current_height + 500
+
+        cur.execute("INSERT INTO weekly_goals (week_start, target_height) VALUES (%s, %s)", (monday, target_height))
+        conn.commit()
+        achieved = False
+    else:
+        target_height, achieved = row
+
+    cur.close()
+    conn.close()
+
+    return jsonify({"week_start": str(monday), "target": target_height, "achieved": achieved})
+
 
 init_db()
 
