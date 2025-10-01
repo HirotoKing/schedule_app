@@ -206,6 +206,14 @@ function startMainQuestions() {
     askNextSlot();
 }
 
+async function fetchWeeklyGoal() {
+    const res = await fetch("/weekly_goal");
+    const data = await res.json();
+    document.getElementById("weeklyGoal").innerText =
+        `今週の目標: ${data.target}m ${data.achieved ? "✅ 達成済み" : ""}`;
+}
+
+
 // ----------------------------
 // 雲処理
 // ----------------------------
