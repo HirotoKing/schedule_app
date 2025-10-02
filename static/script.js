@@ -75,16 +75,26 @@ function updateAltitudeSmoothly(change, callback) {
 // 行動記録と質問処理
 // ----------------------------
 function handleButtonClick(activity) {
+    // --- すでに質問が完了している場合は処理しない ---
+    if (currentSlotIndex >= unansweredSlots.length) {
+        return;
+    }
+
     disableButtons();
     const slot = unansweredSlots[currentSlotIndex];
-    const point = ACTIVITY_POINTS[activity] ?? 0;
+    if (!slot) {
+        enableButtons();
+        return;
+    }
 
+    const point = ACTIVITY_POINTS[activity] ?? 0;
     sendActivityToServer(slot, activity, point);
     updateAltitudeSmoothly(point, () => {
         currentSlotIndex++;
         askNextSlot();
     });
 }
+
 
 function startQuestioning(date) {
     fetchAnsweredSlots(date).then(answered => {

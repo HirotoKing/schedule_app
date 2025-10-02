@@ -33,10 +33,26 @@ body {
 }
 
 .weekly-goal {
-  font-size: 1.2rem;
-  margin-top: 5px;
-  color: #333;
+  position: absolute;
+  top: 60px;              /* バックアップボタンの下に配置 */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 4px 8px;
+  border-radius: 6px;
+  z-index: 5;
 }
+
+@media (max-width: 600px) {
+  .weekly-goal {
+    top: 90px;            /* スマホ時はさらに下に余裕を持たせる */
+    font-size: 0.9rem;
+    max-width: 90%;
+    text-align: center;
+  }
+}
+
 
 
 /* 気球 */
