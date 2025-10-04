@@ -23,12 +23,12 @@
       <button id="weekBtn">直近1週間</button>
     </div>
 
-    <!-- 週週目標を追加 -->
-    <div id="weeklyGoal" class="weekly-goal"></div>  
-
     <!-- 気球と高度表示 -->
     <img src="{{ url_for('static', filename='balloon.png') }}" class="balloon" id="balloon" alt="気球" />
     <div class="altimeter" id="altimeter" data-altitude="0">高度：0m</div>
+
+    <!-- 週週目標を追加 -->
+    <div id="weeklyGoal" class="weekly-goal"></div>  
     <div id="warning" class="warning"></div>
   </div>
 
