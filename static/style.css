@@ -193,7 +193,7 @@ button:disabled {
   #weekPopup .popup-content {
     max-height: 85vh;        /* スマホでは少し広めに */
     padding: 15px;
-    padding-bottom: 40px;    /* ← これを明示的に再指定！ */
+    padding-bottom: 200px;    /* ← これを明示的に再指定！ */
   }
 }
 
