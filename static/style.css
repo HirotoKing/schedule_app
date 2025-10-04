@@ -185,11 +185,15 @@ button:disabled {
   max-width: 400px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.3);
   text-align: left;
-  padding-bottom: 40px;
+  padding-bottom: 40px;      /* ← 下余白を追加 */
 }
+
+/* スマホ最適化 */
 @media (max-width: 600px) {
   #weekPopup .popup-content {
     max-height: 85vh;        /* スマホでは少し広めに */
     padding: 15px;
+    padding-bottom: 40px;    /* ← これを明示的に再指定！ */
   }
 }
+
