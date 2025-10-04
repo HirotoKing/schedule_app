@@ -32,6 +32,7 @@ body {
   z-index: 10;
 }
 
+/* 週目標（高度の下） */
 .weekly-goal {
   margin-top: 8px;
   font-size: 1rem;
@@ -41,17 +42,13 @@ body {
   text-align: center;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-
 @media (max-width: 600px) {
   .weekly-goal {
-    top: 90px;            /* スマホ時はさらに下に余裕を持たせる */
     font-size: 0.9rem;
     max-width: 90%;
     text-align: center;
   }
 }
-
-
 
 /* 気球 */
 .balloon {
@@ -127,7 +124,7 @@ button:disabled {
   transition: transform 0.5s linear;
 }
 
-/* ポップアップ */
+/* ポップアップ共通 */
 .popup {
   position: fixed;
   top: 0;
@@ -141,7 +138,7 @@ button:disabled {
   z-index: 999;
 }
 .popup .popup-content {
-  position: relative; /* 閉じるボタンの基準にする */
+  position: relative;
   padding: 20px;
   background: #fff;
   border-radius: 10px;
@@ -158,21 +155,40 @@ button:disabled {
   position: absolute;
   top: 15px;
   right: 15px;
-  font-size: 20px;   /* 少し小さめに調整 */
+  font-size: 20px;
   font-weight: bold;
   color: #666;
   cursor: pointer;
-  overflow-y: auto;   /* ここを追加：縦スクロール許可 */
   z-index: 10;
 }
 .close-btn:hover {
   color: #000;
 }
 
+/* スマホ時のポップアップ位置調整 */
 @media (max-width: 600px) {
   .popup {
     align-items: flex-start;
-    padding-top: 80px; /* スマホならさらに余白広め */
+    padding-top: 80px;
   }
 }
 
+/* 1週間サマリーポップアップ（スクロール対応） */
+#weekPopup .popup-content {
+  position: relative;
+  max-height: 80vh;          /* 画面の8割の高さまでに制限 */
+  overflow-y: auto;          /* 縦スクロール許可 */
+  padding: 20px;
+  background: #fff;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  text-align: left;
+}
+@media (max-width: 600px) {
+  #weekPopup .popup-content {
+    max-height: 85vh;        /* スマホでは少し広めに */
+    padding: 15px;
+  }
+}
