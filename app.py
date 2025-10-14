@@ -138,15 +138,18 @@ def log_action():
     today = get_today()
     ensure_summary_row(today)
 
+    now_jst = datetime.now(JST)  # ← JST時刻で固定
+
     with db() as conn:
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO logs (date, slot, activity, delta) VALUES (%s, %s, %s, %s)",
-            (today, data.get("slot"), action, delta),
+            "INSERT INTO logs (date, slot, activity, delta, timestamp) VALUES (%s, %s, %s, %s, %s)",
+            (today, data.get("slot"), action, delta, now_jst),
         )
 
     apply_delta(today, delta, activity=action)
     return jsonify({"status": "ok"})
+
 
 @app.route("/apply_bonus", methods=["POST"])
 def apply_bonus():
