@@ -365,6 +365,13 @@ def weekly_goal():
         "achieved": current_total >= weekly_target
     })
 
+@app.route("/debug_db")
+def debug_db():
+    with db() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT current_database(), inet_server_addr(), inet_server_port()")
+        dbname, addr, port = cur.fetchone()
+    return jsonify({"db": dbname, "addr": str(addr), "port": port})
 
 
 
