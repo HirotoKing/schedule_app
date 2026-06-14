@@ -1,11 +1,9 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 import os
-import subprocess
-import tempfile
 import threading
 
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import Flask, jsonify, render_template, request
 import psycopg2
 
 # ----------------------------
@@ -438,22 +436,6 @@ def current_altitude():
         cur.execute("SELECT cumulative_height FROM daily_summary WHERE date = %s", (today,))
         row = cur.fetchone()
     return jsonify({"altitude": int(row[0]) if row else int(INITIAL_HEIGHT)})
-
-@app.route("/backup_now")
-def backup_now():
-    today = datetime.now(JST).strftime("%Y%m%d")
-    filename = f"backup_{today}.sql"
-
-    # 一時ファイルにダンプを作成
-    tmpfile = tempfile.NamedTemporaryFile(delete=False)
-    tmpfile.close()
-    subprocess.run(
-        ["pg_dump", "--no-owner", "--no-privileges", get_database_url(), "-f", tmpfile.name],
-        check=True
-    )
-
-    # 生成したファイルを返す（ブラウザで自動ダウンロード）
-    return send_file(tmpfile.name, as_attachment=True, download_name=filename)
 
 @app.route("/weekly_goal")
 def weekly_goal():

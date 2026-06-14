@@ -44,7 +44,7 @@ Lightsailでは、Gunicornを`systemd`で常駐化し、Nginxから`127.0.0.1:80
 - `deploy/lightsail/schedule-app.service.example`
 - `deploy/lightsail/nginx-schedule-app.conf.example`
 
-本番サーバーでは、`DATABASE_URL`をサービス環境変数として設定してください。PostgreSQLバックアップ機能`/backup_now`を使う場合は、Lightsail側に`pg_dump`が必要です。
+本番サーバーでは、`DATABASE_URL`をサービス環境変数として設定してください。
 
 ## DB確認
 
@@ -53,4 +53,3 @@ python inspect_db.py
 ```
 
 `inspect_db.py`も`DATABASE_URL`を使います。
-
