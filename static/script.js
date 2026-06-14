@@ -16,6 +16,7 @@ let cloudMoveInterval = null;
 let activeQuestionDate = null;
 let activeQuestionLabel = "今日";
 let returnToTodayAfterCurrentDate = false;
+let timeThemeInterval = null;
 
 // ----------------------------
 // 共通ユーティリティ
@@ -25,6 +26,27 @@ function disableButtons() {
 }
 function enableButtons() {
     document.querySelectorAll(".button-grid button").forEach(btn => btn.disabled = false);
+}
+
+function getTimeTheme(hour) {
+    if (hour >= 5 && hour < 10) return "morning";
+    if (hour >= 10 && hour < 17) return "day";
+    if (hour >= 17 && hour < 20) return "evening";
+    return "night";
+}
+
+function applyTimeTheme() {
+    const top = document.querySelector(".top");
+    if (!top) return;
+    const theme = getTimeTheme(new Date().getHours());
+    top.classList.remove("morning", "day", "evening", "night");
+    top.classList.add(theme);
+}
+
+function startTimeThemeClock() {
+    applyTimeTheme();
+    if (timeThemeInterval) clearInterval(timeThemeInterval);
+    timeThemeInterval = setInterval(applyTimeTheme, 60 * 1000);
 }
 
 // ----------------------------
@@ -551,6 +573,7 @@ async function fetchCurrentAltitude() {
 }
 
 window.onload = async () => {
+    startTimeThemeClock();
     const altitude = await fetchCurrentAltitude();
     const altElem = document.getElementById("altimeter");
     altElem.dataset.altitude = altitude;

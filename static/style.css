@@ -7,6 +7,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  background: #f5f7f8;
 }
 
 /* 上部エリア（気球・雲） */
@@ -18,6 +19,39 @@ body {
   justify-content: center;
   align-items: center;
   background: #cceeff;
+  overflow: hidden;
+  transition: background 800ms ease, color 800ms ease;
+}
+.top::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 800ms ease;
+}
+.top.morning {
+  background: linear-gradient(180deg, #ffe3a6 0%, #b8e4f5 58%, #d9f4ee 100%);
+  color: #263238;
+}
+.top.day {
+  background: linear-gradient(180deg, #8ed1f2 0%, #c7eff8 62%, #e8f7e9 100%);
+  color: #1f3340;
+}
+.top.evening {
+  background: linear-gradient(180deg, #f7a06f 0%, #d7a2c8 52%, #8ab9d6 100%);
+  color: #2e2733;
+}
+.top.night {
+  background: linear-gradient(180deg, #1b2b48 0%, #314d75 58%, #6d87a5 100%);
+  color: #f8fbff;
+}
+.top.night::before {
+  opacity: 0.9;
+  background-image:
+    radial-gradient(circle at 16% 22%, rgba(255,255,255,0.9) 0 1px, transparent 2px),
+    radial-gradient(circle at 72% 18%, rgba(255,255,255,0.75) 0 1px, transparent 2px),
+    radial-gradient(circle at 88% 38%, rgba(255,255,255,0.8) 0 1px, transparent 2px),
+    radial-gradient(circle at 44% 31%, rgba(255,255,255,0.7) 0 1px, transparent 2px);
 }
 .top-bar.left {
   position: absolute;
@@ -59,20 +93,22 @@ body {
 .altimeter {
   font-size: 1.5rem;
   margin-top: 10px;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.35);
 }
 
 /* 下部エリア（ボタン・質問） */
 .bottom {
   flex: 1;
-  background: #f0f0f0;
-  padding: 10px;
+  background: #f7f6f0;
+  padding: 12px 10px 16px;
   text-align: center;
 }
 .button-grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  max-width: 420px;
+  margin: 0 auto;
 }
 button {
   padding: 16px;
@@ -82,6 +118,12 @@ button {
   background: #007bff;
   color: white;
   cursor: pointer;
+  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+button:active {
+  transform: translateY(1px) scale(0.98);
+  filter: brightness(0.95);
 }
 button:disabled {
   background-color: #cccccc;
@@ -95,6 +137,54 @@ button:disabled {
 .question {
   font-size: 1.2rem;
   margin-bottom: 15px;
+  line-height: 1.5;
+}
+.activity-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  min-height: 64px;
+  padding: 12px 14px;
+  box-shadow: 0 3px 8px rgba(36, 44, 54, 0.14);
+}
+.activity-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.24);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.activity-label {
+  min-width: 0;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.activity-btn.sleep {
+  background: #6f7fd4;
+}
+.activity-btn.work {
+  background: #2c87a3;
+}
+.activity-btn.think {
+  background: #8a6bb7;
+}
+.activity-btn.study {
+  background: #2f8f71;
+}
+.activity-btn.exercise {
+  background: #d16f43;
+}
+.activity-btn.game {
+  background: #b14f68;
+}
+.activity-btn:disabled {
+  background-color: #cccccc;
 }
 
 /* アニメーション */
@@ -125,6 +215,11 @@ button:disabled {
   pointer-events: none;
   z-index: 1;
   transition: transform 0.5s linear;
+}
+@media (min-width: 700px) {
+  .button-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 /* ポップアップ共通 */
