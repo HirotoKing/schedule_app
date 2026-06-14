@@ -36,12 +36,30 @@
   <div class="bottom">
     <div id="question" class="question">読み込み中...</div>
     <div class="button-grid">
-      <button onclick="handleButtonClick('寝食')">寝食</button>
-      <button onclick="handleButtonClick('仕事')">仕事</button>
-      <button onclick="handleButtonClick('知的活動')">知的活動</button>
-      <button onclick="handleButtonClick('勉強')">勉強</button>
-      <button onclick="handleButtonClick('運動')">運動</button>
-      <button onclick="handleButtonClick('ゲーム')">ゲーム</button>
+      <button class="activity-btn sleep" onclick="handleButtonClick('寝食')">
+        <span class="activity-icon">寝</span>
+        <span class="activity-label">寝食</span>
+      </button>
+      <button class="activity-btn work" onclick="handleButtonClick('仕事')">
+        <span class="activity-icon">仕</span>
+        <span class="activity-label">仕事</span>
+      </button>
+      <button class="activity-btn think" onclick="handleButtonClick('知的活動')">
+        <span class="activity-icon">知</span>
+        <span class="activity-label">知的活動</span>
+      </button>
+      <button class="activity-btn study" onclick="handleButtonClick('勉強')">
+        <span class="activity-icon">学</span>
+        <span class="activity-label">勉強</span>
+      </button>
+      <button class="activity-btn exercise" onclick="handleButtonClick('運動')">
+        <span class="activity-icon">動</span>
+        <span class="activity-label">運動</span>
+      </button>
+      <button class="activity-btn game" onclick="handleButtonClick('ゲーム')">
+        <span class="activity-icon">遊</span>
+        <span class="activity-label">ゲーム</span>
+      </button>
     </div>
     <div id="todayDate" class="today-date"></div>
   </div>
@@ -54,6 +72,18 @@
       <label><input type="checkbox" id="q1"> 昨日のスマホ操作時間は6時間以下だった</label><br>
       <label><input type="checkbox" id="q2"> 昨日は24:00より前に寝て、今日は7:00に起きた</label>
       <button id="bonusSubmit">回答してスタート</button>
+    </div>
+  </div>
+
+  <!-- 昨日の未記録確認ポップアップ -->
+  <div id="resumeYesterdayPopup" class="popup hidden">
+    <div class="popup-content">
+      <h3>昨日の未記録データがあります</h3>
+      <p id="resumeYesterdayMessage"></p>
+      <div class="popup-actions">
+        <button id="resumeYesterdayBtn">入力する</button>
+        <button id="skipYesterdayBtn" class="secondary-btn">今日から開始</button>
+      </div>
     </div>
   </div>
 
