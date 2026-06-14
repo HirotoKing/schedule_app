@@ -342,8 +342,18 @@ function startMainQuestions() {
 async function fetchWeeklyGoal() {
     const res = await fetch("/weekly_goal");
     const data = await res.json();
-    document.getElementById("weeklyGoal").innerText =
-        `今週の目標: ${data.target}m ${data.achieved ? "✅ 達成済み" : ""}`;
+    const weeklyGoal = document.getElementById("weeklyGoal");
+    const statusText = data.achieved ? "達成済み" : `あと${data.remaining}m`;
+    weeklyGoal.innerHTML = `
+        <div class="weekly-goal-header">
+            <span>今週の目標</span>
+            <strong>${statusText}</strong>
+        </div>
+        <div class="weekly-goal-progress">
+            <div class="weekly-goal-progress-fill" style="width: ${data.progress}%"></div>
+        </div>
+        <div class="weekly-goal-detail">${data.current}m / ${data.target}m (${data.progress}%)</div>
+    `;
 }
 
 

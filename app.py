@@ -461,10 +461,14 @@ def weekly_goal():
 
         # 仮に目標を 500m とする（後で調整可）
         weekly_target = 500
+        remaining = max(weekly_target - current_total, 0)
+        progress = min(max(round((current_total / weekly_target) * 100), 0), 100)
 
     return jsonify({
         "target": weekly_target,
         "current": current_total,
+        "remaining": remaining,
+        "progress": progress,
         "achieved": current_total >= weekly_target
     })
 
