@@ -1,0 +1,17 @@
+[Unit]
+Description=Schedule App Gunicorn service
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/schedule_app
+Environment="DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require"
+Environment="PORT=8000"
+ExecStart=/home/ubuntu/schedule_app/.venv/bin/gunicorn app:app --bind 127.0.0.1:8000 --workers 2
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+

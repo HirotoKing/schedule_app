@@ -1,15 +1,37 @@
-import sqlite3
+import os
 
-conn = sqlite3.connect("schedule.db")
-c = conn.cursor()
+import psycopg2
 
-# logs テーブルの中身を表示
-print("=== logs テーブル ===")
-for row in c.execute("SELECT * FROM logs"):
-    print(row)
 
-print("\n=== daily_summary テーブル ===")
-for row in c.execute("SELECT * FROM daily_summary"):
-    print(row)
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    raise SystemExit("DATABASE_URL is not set.")
 
-conn.close()
+
+with psycopg2.connect(DATABASE_URL) as conn:
+    with conn.cursor() as cur:
+        print("=== logs table ===")
+        cur.execute(
+            """
+            SELECT id, date, slot, activity, delta, timestamp
+              FROM logs
+             ORDER BY id DESC
+             LIMIT 50
+            """
+        )
+        for row in cur.fetchall():
+            print(row)
+
+        print("\n=== daily_summary table ===")
+        cur.execute(
+            """
+            SELECT date, sleep_eat_count, work_count, thinking_count,
+                   study_count, exercise_count, game_count,
+                   cumulative_height, height_change, bonus_given
+              FROM daily_summary
+             ORDER BY date DESC
+             LIMIT 50
+            """
+        )
+        for row in cur.fetchall():
+            print(row)

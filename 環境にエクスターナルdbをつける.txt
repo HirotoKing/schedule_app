@@ -1,0 +1,13 @@
+外部PostgreSQLにバックアップSQLを投入する手順
+
+1. コマンドプロンプトまたはPowerShellを開く。
+2. `psql` が使えることを確認する。
+3. 外部DBのURLに `sslmode=require` を付けてSQLを流し込む。
+
+例:
+
+```powershell
+psql "postgresql://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require" -f "C:\Users\hollo\Downloads\backup_20251012.sql"
+```
+
+投入後、Lightsail上のアプリを再起動する。

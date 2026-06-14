@@ -1,8 +1,12 @@
-from flask import Flask, render_template, request, jsonify
-from datetime import datetime, timedelta
-import os
-import psycopg2
 from contextlib import contextmanager
+from datetime import datetime, timedelta, timezone
+import os
+import subprocess
+import tempfile
+import threading
+
+from flask import Flask, jsonify, render_template, request, send_file
+import psycopg2
 
 # ----------------------------
 # Config
@@ -12,21 +16,30 @@ MIN_HEIGHT = 0
 DB_URL_ENV_KEY = "DATABASE_URL"
 
 app = Flask(__name__)
-DATABASE_URL = os.environ.get(DB_URL_ENV_KEY)
+_db_initialized = False
+_db_init_lock = threading.Lock()
 
 # ----------------------------
 # DB Utilities
 # ----------------------------
+def get_database_url() -> str:
+    database_url = os.environ.get(DB_URL_ENV_KEY)
+    if not database_url:
+        raise RuntimeError(
+            f"{DB_URL_ENV_KEY} is not set. "
+            "Set it to the PostgreSQL connection URL before starting the app."
+        )
+    return database_url
+
+
 @contextmanager
 def db() -> psycopg2.extensions.connection:
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(get_database_url())
     try:
         yield conn
         conn.commit()
     finally:
         conn.close()
-
-from datetime import datetime, timedelta, timezone
 
 # 日本時間 (UTC+9)
 JST = timezone(timedelta(hours=9))
@@ -66,6 +79,17 @@ def init_db():
                 bonus_given BOOLEAN DEFAULT FALSE
             )
         """)
+
+
+def ensure_db_initialized():
+    global _db_initialized
+    if _db_initialized:
+        return
+    with _db_init_lock:
+        if not _db_initialized:
+            init_db()
+            _db_initialized = True
+
 
 def ensure_summary_row(date_str: str):
     with db() as conn:
@@ -122,6 +146,17 @@ def apply_delta(date_str: str, delta: int, activity: str | None = None):
 # ----------------------------
 # Routes
 # ----------------------------
+@app.before_request
+def prepare_database():
+    if request.endpoint != "healthz":
+        ensure_db_initialized()
+
+
+@app.route("/healthz")
+def healthz():
+    return jsonify({"status": "ok"})
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -314,10 +349,6 @@ def current_altitude():
         row = cur.fetchone()
     return jsonify({"altitude": int(row[0]) if row else int(INITIAL_HEIGHT)})
 
-from flask import send_file
-import subprocess
-import tempfile
-
 @app.route("/backup_now")
 def backup_now():
     today = datetime.now(JST).strftime("%Y%m%d")
@@ -327,7 +358,7 @@ def backup_now():
     tmpfile = tempfile.NamedTemporaryFile(delete=False)
     tmpfile.close()
     subprocess.run(
-        ["pg_dump", "--no-owner", "--no-privileges", os.environ["DATABASE_URL"], "-f", tmpfile.name],
+        ["pg_dump", "--no-owner", "--no-privileges", get_database_url(), "-f", tmpfile.name],
         check=True
     )
 
@@ -373,9 +404,6 @@ def debug_db():
         dbname, addr, port = cur.fetchone()
     return jsonify({"db": dbname, "addr": str(addr), "port": port})
 
-
-
-init_db()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
