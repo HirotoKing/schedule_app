@@ -43,12 +43,51 @@ def db() -> psycopg2.extensions.connection:
 
 # 日本時間 (UTC+9)
 JST = timezone(timedelta(hours=9))
+SLOT_START_HOUR = 6
+SLOT_COUNT = 38
 
 def get_today() -> str:
     now = datetime.now(JST)  # ← JSTで現在時刻を取得
     if now.hour < 6:
         now = now - timedelta(days=1)
     return now.strftime("%Y-%m-%d")
+
+
+def get_previous_business_day(date_str: str) -> str:
+    return (datetime.strptime(date_str, "%Y-%m-%d").date() - timedelta(days=1)).strftime("%Y-%m-%d")
+
+
+def get_slots_for_date(date_str: str) -> list[str]:
+    day = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=JST)
+    start = day.replace(hour=SLOT_START_HOUR, minute=0, second=0, microsecond=0)
+    now = datetime.now(JST)
+    current_business_day = get_today()
+    slot_count = SLOT_COUNT
+
+    if date_str == current_business_day:
+        elapsed_minutes = max(0, int((now - start).total_seconds() // 60))
+        slot_count = min(SLOT_COUNT, elapsed_minutes // 30)
+
+    return [
+        (start + timedelta(minutes=30 * i)).strftime("%H:%M")
+        for i in range(slot_count)
+    ]
+
+
+def get_answered_slots(date_str: str) -> set[str]:
+    with db() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT slot FROM logs WHERE date = %s AND slot IS NOT NULL AND slot <> '-'",
+            (date_str,),
+        )
+        rows = cur.fetchall()
+    return {r[0] for r in rows}
+
+
+def get_unanswered_slots(date_str: str) -> list[str]:
+    answered = get_answered_slots(date_str)
+    return [slot for slot in get_slots_for_date(date_str) if slot not in answered]
 
 
 def init_db():
@@ -97,8 +136,17 @@ def ensure_summary_row(date_str: str):
         cur.execute("SELECT 1 FROM daily_summary WHERE date = %s", (date_str,))
         exists = cur.fetchone() is not None
         if not exists:
-            # 昨日の累積高度を引き継ぐ
-            cur.execute("SELECT cumulative_height FROM daily_summary ORDER BY date DESC LIMIT 1")
+            # 指定日より前の累積高度を引き継ぐ
+            cur.execute(
+                """
+                SELECT cumulative_height
+                  FROM daily_summary
+                 WHERE date < %s
+                 ORDER BY date DESC
+                 LIMIT 1
+                """,
+                (date_str,),
+            )
             prev = cur.fetchone()
             prev_height = prev[0] if prev else INITIAL_HEIGHT
             cur.execute("""
@@ -126,22 +174,28 @@ def apply_delta(date_str: str, delta: int, activity: str | None = None):
                 f"""
                 UPDATE daily_summary
                    SET {col} = {col} + 1,
-                       height_change = height_change + %s,
-                       cumulative_height = GREATEST(cumulative_height + %s, %s)
+                       height_change = height_change + %s
                  WHERE date = %s
                 """,
-                (delta, delta, MIN_HEIGHT, date_str),
+                (delta, date_str),
             )
         else:
             cur.execute(
                 """
                 UPDATE daily_summary
-                   SET height_change = height_change + %s,
-                       cumulative_height = GREATEST(cumulative_height + %s, %s)
+                   SET height_change = height_change + %s
                  WHERE date = %s
                 """,
-                (delta, delta, MIN_HEIGHT, date_str),
+                (delta, date_str),
             )
+        cur.execute(
+            """
+            UPDATE daily_summary
+               SET cumulative_height = GREATEST(cumulative_height + %s, %s)
+             WHERE date >= %s
+            """,
+            (delta, MIN_HEIGHT, date_str),
+        )
 
 # ----------------------------
 # Routes
@@ -165,13 +219,28 @@ def index():
 def log_action():
     data = request.json or {}
     action = data.get("action")
+    date_str = data.get("date") or get_today()
+    slot = data.get("slot")
+
     try:
         delta = int(data.get("delta", 0))
     except (TypeError, ValueError):
         delta = 0
 
+    try:
+        valid_slots = get_slots_for_date(date_str)
+    except ValueError:
+        return jsonify({"status": "error", "message": "invalid date"}), 400
+
     today = get_today()
-    ensure_summary_row(today)
+    previous_day = get_previous_business_day(today)
+    if date_str not in {previous_day, today}:
+        return jsonify({"status": "error", "message": "date is out of range"}), 400
+
+    if slot not in valid_slots:
+        return jsonify({"status": "error", "message": "invalid slot"}), 400
+
+    ensure_summary_row(date_str)
 
     now_jst = datetime.now(JST)  # ← JST時刻で固定
 
@@ -179,10 +248,10 @@ def log_action():
         cur = conn.cursor()
         cur.execute(
             "INSERT INTO logs (date, slot, activity, delta, timestamp) VALUES (%s, %s, %s, %s, %s)",
-            (today, data.get("slot"), action, delta, now_jst),
+            (date_str, slot, action, delta, now_jst),
         )
 
-    apply_delta(today, delta, activity=action)
+    apply_delta(date_str, delta, activity=action)
     return jsonify({"status": "ok"})
 
 
@@ -244,11 +313,32 @@ def answered_slots():
     date_str = request.args.get("date")
     if not date_str:
         return jsonify([])
-    with db() as conn:
-        cur = conn.cursor()
-        cur.execute("SELECT slot FROM logs WHERE date = %s AND slot IS NOT NULL", (date_str,))
-        rows = cur.fetchall()
-    return jsonify([r[0] for r in rows])
+    return jsonify(sorted(get_answered_slots(date_str)))
+
+
+@app.route("/unanswered_slots")
+def unanswered_slots():
+    date_str = request.args.get("date")
+    if not date_str:
+        return jsonify({"date": None, "slots": []})
+    try:
+        slots = get_unanswered_slots(date_str)
+    except ValueError:
+        return jsonify({"status": "error", "message": "invalid date"}), 400
+    return jsonify({"date": date_str, "slots": slots, "count": len(slots)})
+
+
+@app.route("/startup_context")
+def startup_context():
+    today = get_today()
+    previous_day = get_previous_business_day(today)
+    previous_unanswered = get_unanswered_slots(previous_day)
+    return jsonify({
+        "today": today,
+        "previousDate": previous_day,
+        "previousUnansweredSlots": previous_unanswered,
+        "previousUnansweredCount": len(previous_unanswered),
+    })
 
 @app.route("/summary")
 def get_summary():

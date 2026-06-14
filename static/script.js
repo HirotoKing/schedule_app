@@ -13,6 +13,9 @@ const ACTIVITY_POINTS = {
 let unansweredSlots = [];
 let currentSlotIndex = 0;
 let cloudMoveInterval = null;
+let activeQuestionDate = null;
+let activeQuestionLabel = "今日";
+let returnToTodayAfterCurrentDate = false;
 
 // ----------------------------
 // 共通ユーティリティ
@@ -96,60 +99,109 @@ function handleButtonClick(activity) {
 }
 
 
-function startQuestioning(date) {
-    fetchAnsweredSlots(date).then(answered => {
-        unansweredSlots = getSlots(date).filter(slot => !answered.includes(slot));
+function startQuestioning(date, options = {}) {
+    activeQuestionDate = date;
+    activeQuestionLabel = options.label || "今日";
+    returnToTodayAfterCurrentDate = Boolean(options.returnToToday);
+
+    fetchUnansweredSlots(date).then(slots => {
+        unansweredSlots = slots;
         if (unansweredSlots.length === 0) {
-            document.getElementById("question").innerText = "今日のすべての質問が完了しました。";
+            finishCurrentQuestionSet();
         } else {
             currentSlotIndex = 0;
-            checkBonusStatus().then(bonusGiven => {
-                if (answered.length === 0 && !bonusGiven) {
-                    showBonusQuestions();
-                } else {
-                    startMainQuestions();
-                }
-            });
+            if (options.skipBonus) {
+                startMainQuestions();
+            } else {
+                fetchAnsweredSlots(date).then(answered => {
+                    checkBonusStatus().then(bonusGiven => {
+                        if (answered.length === 0 && !bonusGiven) {
+                            showBonusQuestions();
+                        } else {
+                            startMainQuestions();
+                        }
+                    });
+                });
+            }
         }
-        document.getElementById("todayDate").innerText = "今日の日付：" + date;
+        document.getElementById("todayDate").innerText = `${activeQuestionLabel}の日付：${date}`;
     });
 }
 
-function getSlots(dateStr) {
-    const slots = [];
-    const start = new Date(`${dateStr}T06:00:00`);
-    const end = new Date(start.getTime() + 19 * 60 * 60 * 1000);
+async function startAppQuestioning() {
+    const context = await fetchStartupContext();
+    const skipKey = getYesterdaySkipKey(context.previousDate);
+    const skippedYesterday = localStorage.getItem(skipKey) === "true";
 
-    // 現在時刻
-    const now = new Date();
-
-    // もし日付が違ったら強制的に1日の終わりを上限にする
-    const limit = (now > end) ? end : now;
-
-    for (let t = new Date(start); t < limit; t.setMinutes(t.getMinutes() + 30)) {
-        const h = String(t.getHours()).padStart(2, "0");
-        const m = String(t.getMinutes()).padStart(2, "0");
-        slots.push(`${h}:${m}`);
+    if (context.previousUnansweredCount > 0 && !skippedYesterday) {
+        showResumeYesterdayPrompt(context);
+        return;
     }
-    return slots;
+
+    startQuestioning(context.today);
 }
 
+function showResumeYesterdayPrompt(context) {
+    document.getElementById("resumeYesterdayMessage").innerText =
+        `昨日の未記録データがあります（${context.previousUnansweredCount}件）\n\n昨日の続きを入力しますか？`;
+    document.getElementById("resumeYesterdayPopup").classList.remove("hidden");
+
+    document.getElementById("resumeYesterdayBtn").onclick = () => {
+        document.getElementById("resumeYesterdayPopup").classList.add("hidden");
+        startQuestioning(context.previousDate, {
+            label: "昨日",
+            skipBonus: true,
+            returnToToday: true
+        });
+    };
+
+    document.getElementById("skipYesterdayBtn").onclick = () => {
+        localStorage.setItem(getYesterdaySkipKey(context.previousDate), "true");
+        document.getElementById("resumeYesterdayPopup").classList.add("hidden");
+        startQuestioning(context.today);
+    };
+}
+
+function getYesterdaySkipKey(date) {
+    return `skipYesterday:${date}`;
+}
+
+function finishCurrentQuestionSet() {
+    document.getElementById("question").innerText = `${activeQuestionLabel}のすべての質問が完了しました。`;
+    if (returnToTodayAfterCurrentDate) {
+        returnToTodayAfterCurrentDate = false;
+        fetchStartupContext().then(context => {
+            startQuestioning(context.today);
+        });
+    }
+}
+
+async function fetchStartupContext() {
+    const res = await fetch("/startup_context");
+    return await res.json();
+}
+
+async function fetchUnansweredSlots(date) {
+    const res = await fetch(`/unanswered_slots?date=${date}`);
+    const data = await res.json();
+    return data.slots || [];
+}
 
 function askNextSlot() {
     if (currentSlotIndex >= unansweredSlots.length) {
-        document.getElementById("question").innerText = "今日のすべての質問が完了しました。";
+        finishCurrentQuestionSet();
         return;
     }
     const slot = unansweredSlots[currentSlotIndex];
     const nextTime = getNextHalfHour(slot);
-    document.getElementById("question").innerText = `${slot}〜${nextTime}の間、何をしていましたか？`;
+    document.getElementById("question").innerText = `${activeQuestionLabel}${slot}〜${nextTime}の間、何をしていましたか？`;
 }
 
 function sendActivityToServer(slot, activity, delta) {
     fetch("/log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: activity, slot, delta })
+        body: JSON.stringify({ date: activeQuestionDate, action: activity, slot, delta })
     });
 }
 
@@ -499,12 +551,11 @@ async function fetchCurrentAltitude() {
 }
 
 window.onload = async () => {
-    const today = new Date().toISOString().split('T')[0];
     const altitude = await fetchCurrentAltitude();
     const altElem = document.getElementById("altimeter");
     altElem.dataset.altitude = altitude;
     altElem.innerText = `高度：${altitude}m`;
-    startQuestioning(today);
+    startAppQuestioning();
     initClouds();
     maintainClouds();
     // --- 週目標の取得 ---
