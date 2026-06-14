@@ -35,10 +35,19 @@ function getTimeTheme(hour) {
     return "night";
 }
 
+function getJapanHour() {
+    const hourText = new Intl.DateTimeFormat("ja-JP", {
+        timeZone: "Asia/Tokyo",
+        hour: "2-digit",
+        hour12: false
+    }).format(new Date());
+    return Number(hourText);
+}
+
 function applyTimeTheme() {
     const top = document.querySelector(".top");
     if (!top) return;
-    const theme = getTimeTheme(new Date().getHours());
+    const theme = getTimeTheme(getJapanHour());
     top.classList.remove("morning", "day", "evening", "night");
     top.classList.add(theme);
 }

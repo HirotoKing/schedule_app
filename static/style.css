@@ -42,16 +42,17 @@ body {
   color: #2e2733;
 }
 .top.night {
-  background: linear-gradient(180deg, #1b2b48 0%, #314d75 58%, #6d87a5 100%);
+  background: linear-gradient(180deg, #07142b 0%, #14274a 58%, #2e4f73 100%);
   color: #f8fbff;
 }
 .top.night::before {
-  opacity: 0.9;
+  opacity: 1;
   background-image:
-    radial-gradient(circle at 16% 22%, rgba(255,255,255,0.9) 0 1px, transparent 2px),
-    radial-gradient(circle at 72% 18%, rgba(255,255,255,0.75) 0 1px, transparent 2px),
-    radial-gradient(circle at 88% 38%, rgba(255,255,255,0.8) 0 1px, transparent 2px),
-    radial-gradient(circle at 44% 31%, rgba(255,255,255,0.7) 0 1px, transparent 2px);
+    radial-gradient(circle at 16% 22%, rgba(255,255,255,0.95) 0 1px, transparent 2px),
+    radial-gradient(circle at 72% 18%, rgba(255,255,255,0.85) 0 1px, transparent 2px),
+    radial-gradient(circle at 88% 38%, rgba(255,255,255,0.9) 0 1px, transparent 2px),
+    radial-gradient(circle at 44% 31%, rgba(255,255,255,0.8) 0 1px, transparent 2px),
+    radial-gradient(circle at 58% 8%, rgba(255,255,255,0.75) 0 1px, transparent 2px);
 }
 .top-bar.left {
   position: absolute;
