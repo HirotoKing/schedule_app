@@ -459,17 +459,24 @@ def weekly_goal():
         """, (start_str, end_str))
         current_total = cur.fetchone()[0]
 
-        # 仮に目標を 500m とする（後で調整可）
-        weekly_target = 500
-        remaining = max(weekly_target - current_total, 0)
-        progress = min(max(round((current_total / weekly_target) * 100), 0), 100)
+        silver_target = 200
+        gold_target = 300
+        next_target = gold_target if current_total >= silver_target else silver_target
+        remaining = max(next_target - current_total, 0)
+        progress = min(max(round((current_total / gold_target) * 100), 0), 100)
+        award = "gold" if current_total >= gold_target else "silver" if current_total >= silver_target else None
 
     return jsonify({
-        "target": weekly_target,
+        "silverTarget": silver_target,
+        "goldTarget": gold_target,
+        "target": gold_target,
         "current": current_total,
         "remaining": remaining,
         "progress": progress,
-        "achieved": current_total >= weekly_target
+        "award": award,
+        "silverAchieved": current_total >= silver_target,
+        "goldAchieved": current_total >= gold_target,
+        "achieved": current_total >= gold_target
     })
 
 @app.route("/debug_db")

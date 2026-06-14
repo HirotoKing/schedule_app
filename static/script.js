@@ -343,7 +343,13 @@ async function fetchWeeklyGoal() {
     const res = await fetch("/weekly_goal");
     const data = await res.json();
     const weeklyGoal = document.getElementById("weeklyGoal");
-    const statusText = data.achieved ? "達成済み" : `あと${data.remaining}m`;
+    let statusText = `銀賞まであと${data.remaining}m`;
+    if (data.goldAchieved) {
+        statusText = "金賞達成";
+    } else if (data.silverAchieved) {
+        statusText = `銀賞達成・金賞まであと${data.remaining}m`;
+    }
+
     weeklyGoal.innerHTML = `
         <div class="weekly-goal-header">
             <span>今週の目標</span>
@@ -351,8 +357,9 @@ async function fetchWeeklyGoal() {
         </div>
         <div class="weekly-goal-progress">
             <div class="weekly-goal-progress-fill" style="width: ${data.progress}%"></div>
+            <div class="weekly-goal-silver-marker" style="left: ${(data.silverTarget / data.goldTarget) * 100}%"></div>
         </div>
-        <div class="weekly-goal-detail">${data.current}m / ${data.target}m (${data.progress}%)</div>
+        <div class="weekly-goal-detail">${data.current}m / 金賞${data.goldTarget}m (${data.progress}%)・銀賞${data.silverTarget}m</div>
     `;
 }
 
