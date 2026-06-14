@@ -96,6 +96,41 @@ body {
   margin-top: 10px;
   text-shadow: 0 1px 2px rgba(255,255,255,0.35);
 }
+.milestone-toast {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  z-index: 20;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #213447;
+  font-size: 1.35rem;
+  font-weight: 800;
+  box-shadow: 0 8px 24px rgba(28, 45, 64, 0.22);
+  opacity: 0;
+  transform: translate(-50%, 12px) scale(0.92);
+  pointer-events: none;
+}
+.milestone-toast.show {
+  animation: milestonePop 2.2s ease forwards;
+}
+.sparkle-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 19;
+  pointer-events: none;
+  overflow: hidden;
+}
+.sparkle {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #fff7a8;
+  box-shadow: 0 0 12px rgba(255, 247, 168, 0.85);
+  animation: sparkleBurst 900ms ease-out forwards;
+}
 
 /* 下部エリア（ボタン・質問） */
 .bottom {
@@ -196,6 +231,40 @@ button:disabled {
 }
 .floating {
   animation: float 3s ease-in-out infinite;
+}
+@keyframes milestonePop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 18px) scale(0.86);
+  }
+  16% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1.06);
+  }
+  28% {
+    transform: translate(-50%, 0) scale(1);
+  }
+  78% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -10px) scale(0.96);
+  }
+}
+@keyframes sparkleBurst {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--sparkle-x), var(--sparkle-y)) scale(1.2);
+  }
 }
 
 /* 雲 */

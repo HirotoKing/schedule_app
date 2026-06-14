@@ -17,6 +17,7 @@ let activeQuestionDate = null;
 let activeQuestionLabel = "今日";
 let returnToTodayAfterCurrentDate = false;
 let timeThemeInterval = null;
+let lastCelebratedMilestone = 0;
 
 // ----------------------------
 // 共通ユーティリティ
@@ -56,6 +57,51 @@ function startTimeThemeClock() {
     applyTimeTheme();
     if (timeThemeInterval) clearInterval(timeThemeInterval);
     timeThemeInterval = setInterval(applyTimeTheme, 60 * 1000);
+}
+
+function initializeMilestoneState(altitude) {
+    lastCelebratedMilestone = Math.floor(altitude / 100) * 100;
+}
+
+function maybeCelebrateMilestone(previousAltitude, currentAltitude) {
+    if (currentAltitude <= previousAltitude || currentAltitude < 100) return;
+
+    const milestone = Math.floor(currentAltitude / 100) * 100;
+    if (milestone > lastCelebratedMilestone) {
+        lastCelebratedMilestone = milestone;
+        showMilestoneCelebration(milestone);
+    }
+}
+
+function showMilestoneCelebration(milestone) {
+    const toast = document.getElementById("milestoneToast");
+    const sparkleLayer = document.getElementById("sparkleLayer");
+    if (!toast || !sparkleLayer) return;
+
+    toast.textContent = `${milestone}m到達！`;
+    toast.classList.remove("hidden", "show");
+    void toast.offsetWidth;
+    toast.classList.add("show");
+
+    sparkleLayer.innerHTML = "";
+    for (let i = 0; i < 18; i++) {
+        const sparkle = document.createElement("span");
+        sparkle.className = "sparkle";
+        sparkle.style.left = `${12 + Math.random() * 76}%`;
+        sparkle.style.top = `${18 + Math.random() * 56}%`;
+        sparkle.style.animationDelay = `${Math.random() * 0.25}s`;
+        sparkle.style.setProperty("--sparkle-x", `${Math.random() * 80 - 40}px`);
+        sparkle.style.setProperty("--sparkle-y", `${-20 - Math.random() * 70}px`);
+        sparkleLayer.appendChild(sparkle);
+    }
+
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 1800);
+    setTimeout(() => {
+        toast.classList.add("hidden");
+        sparkleLayer.innerHTML = "";
+    }, 2300);
 }
 
 // ----------------------------
@@ -99,9 +145,11 @@ function updateAltitudeSmoothly(change, callback) {
             if (callback) callback();
             return;
         }
+        const previous = current;
         current += step;
         altElem.innerText = `高度：${current}m`;
         altElem.dataset.altitude = current;
+        maybeCelebrateMilestone(previous, current);
     }, 100);
 }
 
@@ -569,6 +617,7 @@ window.onload = async () => {
     const altElem = document.getElementById("altimeter");
     altElem.dataset.altitude = altitude;
     altElem.innerText = `高度：${altitude}m`;
+    initializeMilestoneState(altitude);
     startAppQuestioning();
     initClouds();
     maintainClouds();

@@ -23,6 +23,8 @@
     <!-- 気球と高度表示 -->
     <img src="{{ url_for('static', filename='balloon.png') }}" class="balloon" id="balloon" alt="気球" />
     <div class="altimeter" id="altimeter" data-altitude="0">高度：0m</div>
+    <div id="milestoneToast" class="milestone-toast hidden"></div>
+    <div id="sparkleLayer" class="sparkle-layer" aria-hidden="true"></div>
 
     <!-- 週週目標を追加 -->
     <div id="weeklyGoal" class="weekly-goal"></div>  
