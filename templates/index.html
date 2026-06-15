@@ -65,12 +65,33 @@
 
   <!-- ボーナス質問ポップアップ -->
   <div id="bonusPopup" class="popup hidden">
-    <div class="popup-content">
-      <h3>初回ログインボーナス 🎁</h3>
-      <p>以下の質問に答えてください（正直に！）</p>
-      <label><input type="checkbox" id="q1"> 昨日のスマホ操作時間は6時間以下だった</label><br>
-      <label><input type="checkbox" id="q2"> 昨日は24:00より前に寝て、今日は7:00に起きた</label>
-      <button id="bonusSubmit">回答してスタート</button>
+    <div class="popup-content bonus-content">
+      <div class="bonus-heading">
+        <span class="bonus-badge">朝</span>
+        <div>
+          <h3>スタートボーナス</h3>
+          <p>昨日のコンディションを確認します。</p>
+        </div>
+      </div>
+      <div class="bonus-options">
+        <label class="bonus-option">
+          <input type="checkbox" id="q1">
+          <span class="bonus-option-icon">制</span>
+          <span>
+            <strong>スマホ時間</strong>
+            <small>昨日のスマホ操作時間は6時間以下だった</small>
+          </span>
+        </label>
+        <label class="bonus-option">
+          <input type="checkbox" id="q2">
+          <span class="bonus-option-icon">早</span>
+          <span>
+            <strong>早寝早起き</strong>
+            <small>昨日は24:00より前に寝て、今日は7:00に起きた</small>
+          </span>
+        </label>
+      </div>
+      <button id="bonusSubmit" class="bonus-submit">回答してスタート</button>
     </div>
   </div>
 

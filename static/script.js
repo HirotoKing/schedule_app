@@ -170,9 +170,10 @@ function handleButtonClick(activity) {
     }
 
     const point = ACTIVITY_POINTS[activity] ?? 0;
-    sendActivityToServer(slot, activity, point);
+    const logPromise = sendActivityToServer(slot, activity, point);
     updateAltitudeSmoothly(point, () => {
         currentSlotIndex++;
+        logPromise.finally(fetchWeeklyGoal);
         askNextSlot();
     });
 }
@@ -277,7 +278,7 @@ function askNextSlot() {
 }
 
 function sendActivityToServer(slot, activity, delta) {
-    fetch("/log", {
+    return fetch("/log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: activeQuestionDate, action: activity, slot, delta })
@@ -326,6 +327,7 @@ function showBonusQuestions() {
                 body: JSON.stringify({ bonus, q1, q2 })
             });
             updateAltitudeSmoothly(bonus, () => {
+                fetchWeeklyGoal();
                 startMainQuestions();
             });
         } else {

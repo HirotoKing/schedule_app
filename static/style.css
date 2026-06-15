@@ -366,6 +366,82 @@ button:disabled {
 .popup-actions button {
   flex: 1;
 }
+.bonus-content {
+  color: #22313f;
+}
+.bonus-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.bonus-heading h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.bonus-heading p {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: #5f6f7c;
+}
+.bonus-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 50%;
+  background: #f2c14e;
+  color: #253446;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(242, 193, 78, 0.32);
+}
+.bonus-options {
+  display: grid;
+  gap: 10px;
+}
+.bonus-option {
+  display: grid;
+  grid-template-columns: auto 36px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(62, 77, 88, 0.16);
+  border-radius: 8px;
+  background: #f8faf8;
+  cursor: pointer;
+}
+.bonus-option input {
+  width: 20px;
+  height: 20px;
+  accent-color: #2f8f71;
+}
+.bonus-option-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e7f1ec;
+  color: #2f6f58;
+  font-weight: 800;
+}
+.bonus-option strong {
+  display: block;
+  font-size: 0.98rem;
+}
+.bonus-option small {
+  display: block;
+  margin-top: 3px;
+  color: #60727f;
+  line-height: 1.35;
+}
+.bonus-submit {
+  width: 100%;
+  margin-top: 16px;
+}
 
 /* 閉じるボタン（×） */
 .close-btn {
