@@ -37,12 +37,13 @@ function getTimeTheme(hour) {
 }
 
 function getJapanHour() {
-    const hourText = new Intl.DateTimeFormat("ja-JP", {
+    const parts = new Intl.DateTimeFormat("ja-JP", {
         timeZone: "Asia/Tokyo",
         hour: "2-digit",
         hour12: false
-    }).format(new Date());
-    return Number(hourText);
+    }).formatToParts(new Date());
+    const hour = parts.find(part => part.type === "hour");
+    return Number(hour ? hour.value : 0);
 }
 
 function applyTimeTheme() {
